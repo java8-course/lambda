@@ -41,6 +41,7 @@ public class Lambdas05 {
         r.run();
     }
 
+    @FunctionalInterface
     private interface DoSmth {
         void doSmth();
     }
@@ -51,7 +52,7 @@ public class Lambdas05 {
     }
 
     private void conflict(DoSmth d) {
-        System.out.println("Runnable");
+        System.out.println("DoSmth");
         d.doSmth();
     }
 

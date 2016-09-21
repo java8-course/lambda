@@ -20,6 +20,7 @@ public class Lambdas03 {
                 new GenericSum<Integer>() {
                     @Override
                     public Integer sum(Integer i1, Integer i2) {
+                        System.out.print("before sum");
                         return i1 + i2;
                     }
                 };

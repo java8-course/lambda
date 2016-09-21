@@ -1,6 +1,7 @@
 package lambda.part1.example;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -8,6 +9,7 @@ import data.Person;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -24,6 +26,7 @@ public class Lambdas02 {
         };
 
         Arrays.sort(persons, (o1, o2) -> o1.getLastName().compareTo(o2.getFirstName()));
+        //Arrays.sort(persons, Comparator.comparing(p -> p.getFirstName()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 2", "lastName 1", 30),
