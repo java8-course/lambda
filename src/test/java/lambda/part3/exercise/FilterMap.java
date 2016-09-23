@@ -1,10 +1,15 @@
 package lambda.part3.exercise;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import data.Employee;
+import data.JobHistoryEntry;
+import data.Person;
+import org.junit.Test;
+
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("WeakerAccess")
 public class FilterMap {
@@ -55,12 +60,12 @@ public class FilterMap {
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
             List<Container<Object, Object>> newActions = new ArrayList<>(actions);
             newActions.add(new Container<>((Function<Object, Object>) function));
-            return new LazyCollectionHelper<>((List<R>)list, newActions);
+            return new LazyCollectionHelper<>((List<R>) list, newActions);
         }
 
         public List<T> force() {
             final List<T> result = new ArrayList<>();
-            for (Object o: list) {
+            for (Object o : list) {
                 boolean pass = true;
                 final Iterator<Container<Object, Object>> acterator = actions.iterator();
                 while (pass && acterator.hasNext()) {
@@ -75,5 +80,76 @@ public class FilterMap {
             }
             return result;
         }
+    }
+
+    @Test
+    public void mapping() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+
+        final List<Employee> mappedEmployees =
+                new LazyCollectionHelper<>(employees)
+                        // change name to John
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        // add 1 year to experience duration
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        // Filter out persons older than 40
+                        .filter(e -> e.getPerson().getAge() <= 40)
+                        // replace qa with QA
+                        .map(e -> e.withJobHistory(replaceQA(e.getJobHistory())))
+                        .force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "dev", "epam"),
+                                        new JobHistoryEntry(2, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> newHistory = new ArrayList<>(jobHistory.size());
+        jobHistory.forEach(jhe -> newHistory.add(jhe.withDuration(jhe.getDuration() + 1)));
+
+        return newHistory;
+    }
+
+    private List<JobHistoryEntry> replaceQA(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> newHistory = new ArrayList<>(jobHistory.size());
+        jobHistory.forEach(jhe -> newHistory.add("qa".equals(jhe.getPosition()) ? jhe.withPosition("QA") : jhe));
+
+        return newHistory;
     }
 }
