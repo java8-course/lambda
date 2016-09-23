@@ -1,10 +1,12 @@
 package lambda.part3.exercise;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+@SuppressWarnings("WeakerAccess")
 public class FilterMap {
 
     public static class Container<T, R> {
@@ -30,6 +32,7 @@ public class FilterMap {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static class LazyCollectionHelper<T> {
         private final List<Container<Object, Object>> actions;
         private final List<T> list;
@@ -50,13 +53,27 @@ public class FilterMap {
         }
 
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<Container<Object, Object>> newActions = new ArrayList<>(actions);
+            newActions.add(new Container<>((Function<Object, Object>) function));
+            return new LazyCollectionHelper<>((List<R>)list, newActions);
         }
 
         public List<T> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<T> result = new ArrayList<>();
+            for (Object o: list) {
+                boolean pass = true;
+                final Iterator<Container<Object, Object>> acterator = actions.iterator();
+                while (pass && acterator.hasNext()) {
+                    Container action = acterator.next();
+                    Predicate aPred = action.getPredicate();
+                    if (aPred != null)
+                        pass = aPred.test(o);
+                    else
+                        o = action.getFunction().apply(o);
+                }
+                if (pass) result.add((T) o);
+            }
+            return result;
         }
     }
 }
