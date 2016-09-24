@@ -45,7 +45,6 @@ public class FilterMapWithFlatmap {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static class LazyCollectionHelper<T> {
         private final List<Container> actions;
         private final List list;
@@ -62,21 +61,22 @@ public class FilterMapWithFlatmap {
         public LazyCollectionHelper<T> filter(Predicate<T> condition) {
             List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withPredicate((Predicate) condition));
-            return new LazyCollectionHelper(list, newActions);
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
             List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withFunction((Function) function));
-            return new LazyCollectionHelper(list, newActions);
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
         public <R> LazyCollectionHelper<R> flatMap(Function<T, List<R>> function) {
             List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withFlatFunction((Function) function));
-            return new LazyCollectionHelper(list, newActions);
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
+        @SuppressWarnings("unchecked")
         public List<T> force() {
             List currentResult = list;
             for (Container action : actions) {

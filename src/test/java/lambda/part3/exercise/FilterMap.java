@@ -37,32 +37,32 @@ public class FilterMap {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static class LazyCollectionHelper<T> {
         private final List<Container> actions;
         private final List list;
 
-        public LazyCollectionHelper(List list, List actions) {
+        public LazyCollectionHelper(List list, List<Container> actions) {
             this.actions = actions;
             this.list = list;
         }
 
         public LazyCollectionHelper(List<T> list) {
-            this(list, new ArrayList());
+            this(list, new ArrayList<>());
         }
 
         public LazyCollectionHelper<T> filter(Predicate<T> condition) {
             List<Container> newActions = new ArrayList<>(actions);
             newActions.add(new Container(condition));
-            return new LazyCollectionHelper(list, newActions);
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
             List<Container> newActions = new ArrayList<>(actions);
             newActions.add(new Container(function));
-            return new LazyCollectionHelper(list, newActions);
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
+        @SuppressWarnings("unchecked")
         public List<T> force() {
             final List<T> result = new ArrayList<>();
             for (Object o : list) {
