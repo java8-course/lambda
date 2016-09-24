@@ -21,7 +21,7 @@ public class FilterMapWithFlatmap {
 
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @Getter
-    public static class Container<T, R> {
+    public static class Container {
         enum Contype {
             WITH_PREDICATE,
             WITH_FUNCTION,
@@ -32,25 +32,25 @@ public class FilterMapWithFlatmap {
         private final Function function;
         private final Contype type;
 
-        public static <T> Container<T, T> withPredicate(Predicate<T> predicate) {
-            return new Container<>(predicate, null, WITH_PREDICATE);
+        public static Container withPredicate(Predicate predicate) {
+            return new Container(predicate, null, WITH_PREDICATE);
         }
 
-        public static <T, R> Container<T, R> withFunction(Function<T, R> function) {
-            return new Container<>(null, function, WITH_FUNCTION);
+        public static Container withFunction(Function function) {
+            return new Container(null, function, WITH_FUNCTION);
         }
 
-        public static <T, R> Container<T, R> withFlatFunction(Function<T, List<R>> function) {
-            return new Container<>(null, function, WITH_FLAT_FUNCTION);
+        public static Container withFlatFunction(Function function) {
+            return new Container(null, function, WITH_FLAT_FUNCTION);
         }
     }
 
     @SuppressWarnings("unchecked")
     public static class LazyCollectionHelper<T> {
-        private final List<Container<Object, Object>> actions;
-        private final List<T> list;
+        private final List<Container> actions;
+        private final List list;
 
-        public LazyCollectionHelper(List<T> list, List<Container<Object, Object>> actions) {
+        public LazyCollectionHelper(List list, List<Container> actions) {
             this.actions = actions;
             this.list = list;
         }
@@ -60,21 +60,21 @@ public class FilterMapWithFlatmap {
         }
 
         public LazyCollectionHelper<T> filter(Predicate<T> condition) {
-            List<Container<Object, Object>> newActions = new ArrayList<>(actions);
+            List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withPredicate((Predicate) condition));
-            return new LazyCollectionHelper<>(list, newActions);
+            return new LazyCollectionHelper(list, newActions);
         }
 
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
-            List<Container<Object, Object>> newActions = new ArrayList<>(actions);
+            List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withFunction((Function) function));
-            return new LazyCollectionHelper<>((List<R>) list, newActions);
+            return new LazyCollectionHelper(list, newActions);
         }
 
         public <R> LazyCollectionHelper<R> flatMap(Function<T, List<R>> function) {
-            List<Container<Object, Object>> newActions = new ArrayList<>(actions);
+            List<Container> newActions = new ArrayList<>(actions);
             newActions.add(Container.withFlatFunction((Function) function));
-            return new LazyCollectionHelper<>((List<R>) list, newActions);
+            return new LazyCollectionHelper(list, newActions);
         }
 
         public List<T> force() {
