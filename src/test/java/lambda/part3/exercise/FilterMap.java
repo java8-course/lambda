@@ -65,18 +65,16 @@ public class FilterMap {
         @SuppressWarnings("unchecked")
         public List<T> force() {
             final List<T> result = new ArrayList<>();
+            nextObject:
             for (Object o : list) {
-                boolean pass = true;
-                final Iterator<Container> acterator = actions.iterator();
-                while (pass && acterator.hasNext()) {
-                    Container action = acterator.next();
+                for (Container action : actions) {
                     Predicate aPred = action.getPredicate();
-                    if (aPred != null)
-                        pass = aPred.test(o);
-                    else
+                    if (aPred != null) {
+                        if (!aPred.test(o)) break nextObject;
+                    } else
                         o = action.getFunction().apply(o);
                 }
-                if (pass) result.add((T) o);
+                result.add((T) o);
             }
             return result;
         }
