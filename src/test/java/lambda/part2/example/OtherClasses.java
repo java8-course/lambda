@@ -139,4 +139,57 @@ public class OtherClasses {
         final ObjIntConsumer<String> checkLength = null;
     }
 
+    private interface PersonFactory {
+        Person create(String name, String lastName, int age);
+    }
+
+    // ((String, String, int) -> Person, String) -> (String, Int) -> Person
+    private BiFunction<String, Integer, Person> partiallyApply(
+            PersonFactory pf,
+            String lastName) {
+        return (name, age) -> pf.create(name, lastName, age);
+    }
+
+    // ((String, String, int) -> Person) -> String -> String -> Int -> Person
+    private Function<String, Function<String, IntFunction<Person>>> curry(
+            PersonFactory pf) {
+        return name -> lastName -> age -> pf.create(name, lastName, age);
+    }
+
+    public void currying() {
+        // (String, String, int) -> Person
+        final PersonFactory factory = (n, ln, a) -> new Person(n, ln, a);
+
+
+        final BiFunction<String, Integer, Person> doe =
+                (name, age) -> factory.create(name, "Doe", age);
+
+        final Person mother = doe.apply("Samanta", 33);
+        final Person father = doe.apply("Bob", 33);
+        final Person son = doe.apply("John", 33);
+
+
+        // String -> String -> int -> Person
+        final Function<String, Function<String, IntFunction<Person>>> curried =
+                name -> (lastName -> age -> factory.create(name, lastName, age));
+
+        final Function<String, IntFunction<Person>> john =
+                curried.apply("John");
+
+        final IntFunction<Person> johnDoeWithoutAge =
+                john.apply("Doe");
+
+        assertEquals(new Person("John", "Doe", 22), johnDoeWithoutAge.apply(22));
+        assertEquals(new Person("John", "Doe", 33), johnDoeWithoutAge.apply(33));
+    }
+
+
+
+
+
+
+
+
+
+
 }
