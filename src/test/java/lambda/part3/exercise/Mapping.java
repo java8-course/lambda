@@ -5,10 +5,14 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,8 +34,18 @@ public class Mapping {
             throw new UnsupportedOperationException();
         }
 
-        // TODO *
-        // public <R> MapHelper<R> flatMap(Function<T, List<R>> f)
+        // [T] -> (T -> [R]) -> [R]
+
+        // map: [T, T, T], T -> [R] => [[], [R1, R2], [R3, R4, R5]]
+        // flatMap: [T, T, T], T -> [R] => [R1, R2, R3, R4, R5]
+        public <R> MapHelper<R> flatMap(Function<T, List<R>> f) {
+            final List<R> result = new ArrayList<R>();
+            list.forEach(t ->
+                    f.apply(t).forEach(result::add)
+            );
+
+            return new MapHelper<R>(result);
+        }
     }
 
     @Test
@@ -93,43 +107,119 @@ public class Mapping {
     }
 
 
-    private static class LazyMapHelperNext<T, R> {
-        private final Function<T, R> funtion;
+    private static class LazyMapHelper<T, R> {
+        private final Function<T, R> function;
         private final List<T> list;
 
-        public LazyMapHelperNext(List<T> list, Function<T, R> funtion) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public LazyMapHelper(List<T> list, Function<T, R> function) {
+
+            this.list = list;
+            this.function = function;
+        }
+
+        public static <T> LazyMapHelper<T, T> from(List<T> list) {
+            return new LazyMapHelper<>(list, Function.identity());
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<>(list).map(function).getList();
         }
 
-        public <R2> LazyMapHelperNext<T, R2> map(Function<R, R2> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
+            return new LazyMapHelper<T, R2>(list, function.andThen(f));
         }
 
         // TODO *
         // public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f)
     }
 
-    private static class LazyMapHelper<T> {
-        public LazyMapHelper(List<T> list) {
-            // TODO
-            throw new UnsupportedOperationException();
+    private static class LazyFlatMapHelper<T, R> {
+        private final BiConsumer<List<T>, Consumer<R>> forEachR;
+        private final List<T> list;
+
+        public LazyFlatMapHelper(List<T> list, BiConsumer<List<T>, Consumer<R>> forEachR) {
+
+            this.list = list;
+            this.forEachR = forEachR;
         }
 
-        public List<T> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+        public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
+            final BiConsumer<List<T>, Consumer<T>> traverse = (ts, c) -> {
+                for (T t : ts) {
+                    c.accept(t);
+                }
+            };
+            return new LazyFlatMapHelper<>(list, traverse);
         }
 
-        public <R> LazyMapHelperNext<T, R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public List<R> force() {
+            final List<R> result = new ArrayList<R>();
+
+            forEachR.accept(list, result::add);
+
+            return result;
+        }
+
+        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
+
+            BiConsumer<List<T>, Consumer<R2>> forEachR2 = (ts, consR2) ->
+                    forEachR.accept(ts, r ->
+                            f.apply(r).forEach(consR2)
+                    );
+            return new LazyFlatMapHelper<T, R2>(list, forEachR2);
+        }
+
+        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
+            return flatMap(f.andThen(Collections::singletonList));
+        }
+
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> p) {
+            return flatMap(r ->
+                    p.test(r)
+                            ? Collections.singletonList(r)
+                            : Collections.emptyList());
+        }
+    }
+
+    private static abstract class LazyFlatMapHelper2<T, R> {
+        public abstract void forEach(Consumer<R> consumer);
+
+        public static <T> LazyFlatMapHelper2<T, T> from(List<T> list) {
+            return new LazyFlatMapHelper2<T, T>() {
+                @Override
+                public void forEach(Consumer<T> consumer) {
+                    list.forEach(consumer);
+                }
+            };
+        }
+
+        public List<R> force() {
+            final List<R> result = new ArrayList<R>();
+
+            forEach(result::add);
+
+            return result;
+        }
+
+        public <R2> LazyFlatMapHelper2<T, R2> flatMap(Function<R, List<R2>> f) {
+            final LazyFlatMapHelper2<T, R> rs = this;
+            return new LazyFlatMapHelper2<T, R2>() {
+                @Override
+                public void forEach(Consumer<R2> consumer) {
+                    rs.forEach(r -> f.apply(r).forEach(consumer));
+                }
+            };
+        }
+
+        public <R2> LazyFlatMapHelper2<T, R2> map(Function<R, R2> f) {
+            return flatMap(f.andThen(Collections::singletonList));
+        }
+
+        public LazyFlatMapHelper2<T, R> filter(Predicate<R> p) {
+            return flatMap(r ->
+                    p.test(r)
+                            ? Collections.singletonList(r)
+                            : Collections.emptyList());
         }
     }
 
@@ -158,7 +248,7 @@ public class Mapping {
                 );
 
         final List<Employee> mappedEmployees =
-                new LazyMapHelper<>(employees)
+                LazyMapHelper.from(employees)
                 /*
                 .map(TODO) // change name to John
                 .map(TODO) // add 1 year to experience duration
