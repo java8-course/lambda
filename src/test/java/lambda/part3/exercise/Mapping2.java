@@ -3,6 +3,7 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.junit.Test;
 
@@ -11,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 public class Mapping2 {
 
-    @AllArgsConstructor
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @SuppressWarnings("WeakerAccess")
     private static class LazyMapHelper<T> {
         private final List list;
@@ -59,7 +59,7 @@ public class Mapping2 {
             return new LazyMapHelper<>(list, newOps);
         }
 
-        public LazyMapHelper<T> filter (Predicate<T> p) {
+        public LazyMapHelper<T> filter(Predicate<T> p) {
             final BiConsumer<List, List<T>> newOps =
                     (ls, rs) -> {
                         List<T> lBefore = new ArrayList<>();
