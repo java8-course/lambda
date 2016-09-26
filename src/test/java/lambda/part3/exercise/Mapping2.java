@@ -40,8 +40,7 @@ public class Mapping2 {
         public <R> LazyMapHelper<R> map(Function<T, R> f) {
             final BiConsumer<List, List<R>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = new ArrayList<>(ls.size());
-                        operations.accept(ls, lBefore);
+                        List<T> lBefore = force();
                         for (T item : lBefore)
                             rs.add(f.apply(item));
                     };
@@ -51,8 +50,7 @@ public class Mapping2 {
         public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
             final BiConsumer<List, List<R>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = new ArrayList<>();
-                        operations.accept(ls, lBefore);
+                        List<T> lBefore = force();
                         for (T item : lBefore)
                             rs.addAll(f.apply(item));
                     };
@@ -62,8 +60,7 @@ public class Mapping2 {
         public LazyMapHelper<T> filter(Predicate<T> p) {
             final BiConsumer<List, List<T>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = new ArrayList<>();
-                        operations.accept(ls, lBefore);
+                        List<T> lBefore = force();
                         for (T item : lBefore)
                             if (p.test(item)) rs.add(item);
                     };
