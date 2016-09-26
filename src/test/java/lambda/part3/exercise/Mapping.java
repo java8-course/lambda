@@ -181,45 +181,67 @@ public class Mapping {
         }
     }
 
-    private static abstract class LazyFlatMapHelper2<T, R> {
-        public abstract void forEach(Consumer<R> consumer);
+    private static interface Collection<T> {
+        void forEach(Consumer<T> c);
 
-        public static <T> LazyFlatMapHelper2<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper2<T, T>() {
-                @Override
-                public void forEach(Consumer<T> consumer) {
-                    list.forEach(consumer);
-                }
-            };
-        }
-
-        public List<R> force() {
-            final List<R> result = new ArrayList<R>();
+        default List<T> toList() {
+            final List<T> result = new ArrayList<T>();
 
             forEach(result::add);
 
             return result;
         }
 
-        public <R2> LazyFlatMapHelper2<T, R2> flatMap(Function<R, List<R2>> f) {
-            final LazyFlatMapHelper2<T, R> rs = this;
-            return new LazyFlatMapHelper2<T, R2>() {
+        default Collection<T> filter(Predicate<T> p) {
+            final Collection<T> self = this;
+            return new Collection<T>() {
                 @Override
-                public void forEach(Consumer<R2> consumer) {
-                    rs.forEach(r -> f.apply(r).forEach(consumer));
+                public void forEach(Consumer<T> c) {
+                    self.forEach(t -> {
+                        if(p.test(t)) {
+                            c.accept(t);
+                        }
+                    });
                 }
             };
         }
 
-        public <R2> LazyFlatMapHelper2<T, R2> map(Function<R, R2> f) {
-            return flatMap(f.andThen(Collections::singletonList));
+        default <R> Collection<R> map(Function<T, R> f) {
+            final Collection<T> self = this;
+            return new Collection<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
         }
 
-        public LazyFlatMapHelper2<T, R> filter(Predicate<R> p) {
-            return flatMap(r ->
-                    p.test(r)
-                            ? Collections.singletonList(r)
-                            : Collections.emptyList());
+        default <R> Collection<R> flatMap(Function<T, Collection<R>> f) {
+            final Collection<T> self = this;
+            return new Collection<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> {
+                        f.apply(t).forEach(c);
+                    });
+                }
+            };
+        }
+    }
+
+    private static class CollectionImpl<T> implements Collection<T> {
+
+
+        private final List<T> list;
+
+        public CollectionImpl(List<T> list) {
+
+            this.list = list;
+        }
+
+        @Override
+        public void forEach(Consumer<T> c) {
+            list.forEach(c);
         }
     }
 
