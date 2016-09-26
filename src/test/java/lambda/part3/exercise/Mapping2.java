@@ -21,47 +21,47 @@ public class Mapping2 {
 
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @SuppressWarnings("WeakerAccess")
-    private static class LazyMapHelper<T> {
-        private final List list;
-        private final BiConsumer<List, List<T>> operations;
+    private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final BiConsumer<List<T>, List<R>> operations;
 
-        @SuppressWarnings("unchecked")
-        public LazyMapHelper(List<T> list) {
-            this.list = list;
-            operations = (inputList, outputList) -> outputList.addAll((List<T>) inputList);
+        public static <T> LazyMapHelper<T, T> ofList(List<T> list) {
+            final BiConsumer<List<T>, List<T>> noOps = (inputList, outputList) -> outputList.addAll(inputList);
+
+            return new LazyMapHelper<>(list, noOps);
         }
 
-        public List<T> force() {
-            List<T> result = new ArrayList<>();
+        public List<R> force() {
+            List<R> result = new ArrayList<>();
             operations.accept(list, result);
             return result;
         }
 
-        public <R> LazyMapHelper<R> map(Function<T, R> f) {
-            final BiConsumer<List, List<R>> newOps =
+        public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
+            final BiConsumer<List<T>, List<R2>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
+                        List<R> lBefore = force();
+                        for (R item : lBefore)
                             rs.add(f.apply(item));
                     };
             return new LazyMapHelper<>(list, newOps);
         }
 
-        public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
-            final BiConsumer<List, List<R>> newOps =
+        public <R2> LazyMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
+            final BiConsumer<List<T>, List<R2>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
+                        List<R> lBefore = force();
+                        for (R item : lBefore)
                             rs.addAll(f.apply(item));
                     };
             return new LazyMapHelper<>(list, newOps);
         }
 
-        public LazyMapHelper<T> filter(Predicate<T> p) {
-            final BiConsumer<List, List<T>> newOps =
+        public LazyMapHelper<T, R> filter(Predicate<R> p) {
+            final BiConsumer<List<T>, List<R>> newOps =
                     (ls, rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
+                        List<R> lBefore = force();
+                        for (R item : lBefore)
                             if (p.test(item)) rs.add(item);
                     };
             return new LazyMapHelper<>(list, newOps);
@@ -92,8 +92,7 @@ public class Mapping2 {
 
     @Test
     public void lazy_mapping() {
-        final List<Employee> mappedEmployees =
-                new LazyMapHelper<>(employees)
+        final List<Employee> mappedEmployees = LazyMapHelper.ofList(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(e -> e.withJobHistory(replaceQA(e.getJobHistory())))
@@ -126,8 +125,7 @@ public class Mapping2 {
 
     @Test
     public void flatMapping() {
-        final List<JobHistoryEntry> teamExperienceInQA =
-                new LazyMapHelper<>(employees)
+        final List<JobHistoryEntry> teamExperienceInQA = LazyMapHelper.ofList(employees)
                         .flatMap(Employee::getJobHistory)
                         .filter(jhe -> jhe.getPosition().equals("qa"))
                         .force();
