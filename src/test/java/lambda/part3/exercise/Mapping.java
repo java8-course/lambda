@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 
 public class Mapping {
 
-    private static class MapHelper<T> {
+    public static class MapHelper<T> {
         private final List<T> list;
 
         public MapHelper(List<T> list) {
@@ -30,8 +30,11 @@ public class Mapping {
         }
 
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<>();
+            for (T t : list) {
+                result.add(f.apply(t));
+            }
+            return new MapHelper<>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -79,7 +82,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -198,7 +201,7 @@ public class Mapping {
                 @Override
                 public void forEach(Consumer<T> c) {
                     self.forEach(t -> {
-                        if(p.test(t)) {
+                        if (p.test(t)) {
                             c.accept(t);
                         }
                     });
@@ -276,7 +279,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
