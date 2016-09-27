@@ -57,9 +57,8 @@ public class Lambdas03Exercise {
         assertEquals(prod.prod("a", 2), "aa");
     }
 
-    private final String delimeter = "-";
-
     private String stringSumWithDelimeter(String s, int i) {
+        String delimeter = "-";
         final StringJoiner sj = new StringJoiner(delimeter);
         for (int j = 0; j < i; j++) {
             sj.add(s);
