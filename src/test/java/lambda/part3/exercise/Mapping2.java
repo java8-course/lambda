@@ -24,10 +24,8 @@ public class Mapping2 {
     private static class LazyMapHelper<T> {
         private final Consumer<List<T>> operations;
 
-        public static <T> LazyMapHelper<T> ofList(List<T> list) {
-            final Consumer<List<T>> noOps = (outputList) -> outputList.addAll(list);
-
-            return new LazyMapHelper<>(noOps);
+        public LazyMapHelper(List<T> list) {
+            operations = outputList -> outputList.addAll(list);
         }
 
         public List<T> force() {
@@ -91,7 +89,7 @@ public class Mapping2 {
 
     @Test
     public void lazy_mapping() {
-        final List<Employee> mappedEmployees = LazyMapHelper.ofList(employees)
+        final List<Employee> mappedEmployees = new LazyMapHelper<>(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(e -> e.withJobHistory(replaceQA(e.getJobHistory())))
@@ -124,7 +122,7 @@ public class Mapping2 {
 
     @Test
     public void flatMapping() {
-        final List<JobHistoryEntry> teamExperienceInQA = LazyMapHelper.ofList(employees)
+        final List<JobHistoryEntry> teamExperienceInQA = new LazyMapHelper<>(employees)
                         .flatMap(Employee::getJobHistory)
                         .filter(jhe -> jhe.getPosition().equals("qa"))
                         .force();
