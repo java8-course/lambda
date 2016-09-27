@@ -22,8 +22,7 @@ public class Mapping3 {
         Consumer<List<T>> operations();
 
         static <T> LazyMapHelper<T> ofList(List<T> list) {
-            final Consumer<List<T>> noOps = (outputList) -> outputList.addAll(list);
-            return withOps(noOps);
+            return withOps(outputList -> outputList.addAll(list));
         }
 
         // In Java 9, this method will be private.
@@ -38,33 +37,17 @@ public class Mapping3 {
         }
 
         default <R> LazyMapHelper<R> map(Function<T, R> f) {
-            final Consumer<List<R>> newOps =
-                    (rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
-                            rs.add(f.apply(item));
-                    };
-            return withOps(newOps);
+            return withOps(rs -> force().forEach(item -> rs.add(f.apply(item))));
         }
 
         default <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
-            final Consumer<List<R>> newOps =
-                    (rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
-                            rs.addAll(f.apply(item));
-                    };
-            return withOps(newOps);
+            return withOps(rs -> force().forEach(item -> rs.addAll(f.apply(item))));
         }
 
         default LazyMapHelper<T> filter(Predicate<T> p) {
-            final Consumer<List<T>> newOps =
-                    (rs) -> {
-                        List<T> lBefore = force();
-                        for (T item : lBefore)
-                            if (p.test(item)) rs.add(item);
-                    };
-            return withOps(newOps);
+            return withOps(rs -> force().forEach(item -> {
+                if (p.test(item)) rs.add(item);
+            }));
         }
     }
 
