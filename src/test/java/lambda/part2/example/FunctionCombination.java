@@ -39,7 +39,7 @@ public class FunctionCombination {
 
     // (A -> B, B -> C) -> A -> C
     private <A, B, C> Function<A, C> andThen(Function<A, B> f1, Function<B, C> f2) {
-        throw new UnsupportedOperationException();
+        return a -> f2.apply(f1.apply(a));
     }
 
     @Test
