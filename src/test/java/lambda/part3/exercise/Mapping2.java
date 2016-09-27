@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -22,50 +21,49 @@ public class Mapping2 {
 
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     @SuppressWarnings("WeakerAccess")
-    private static class LazyMapHelper<T, R> {
-        private final List<T> list;
-        private final Consumer<List<R>> operations;
+    private static class LazyMapHelper<T> {
+        private final Consumer<List<T>> operations;
 
-        public static <T> LazyMapHelper<T, T> ofList(List<T> list) {
+        public static <T> LazyMapHelper<T> ofList(List<T> list) {
             final Consumer<List<T>> noOps = (outputList) -> outputList.addAll(list);
 
-            return new LazyMapHelper<>(list, noOps);
+            return new LazyMapHelper<>(noOps);
         }
 
-        public List<R> force() {
-            List<R> result = new ArrayList<>();
+        public List<T> force() {
+            List<T> result = new ArrayList<>();
             operations.accept(result);
             return result;
         }
 
-        public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            final Consumer<List<R2>> newOps =
-                    (rs) -> {
-                        List<R> lBefore = force();
-                        for (R item : lBefore)
-                            rs.add(f.apply(item));
-                    };
-            return new LazyMapHelper<>(list, newOps);
-        }
-
-        public <R2> LazyMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            final Consumer<List<R2>> newOps =
-                    (rs) -> {
-                        List<R> lBefore = force();
-                        for (R item : lBefore)
-                            rs.addAll(f.apply(item));
-                    };
-            return new LazyMapHelper<>(list, newOps);
-        }
-
-        public LazyMapHelper<T, R> filter(Predicate<R> p) {
+        public <R> LazyMapHelper<R> map(Function<T, R> f) {
             final Consumer<List<R>> newOps =
                     (rs) -> {
-                        List<R> lBefore = force();
-                        for (R item : lBefore)
+                        List<T> lBefore = force();
+                        for (T item : lBefore)
+                            rs.add(f.apply(item));
+                    };
+            return new LazyMapHelper<>(newOps);
+        }
+
+        public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
+            final Consumer<List<R>> newOps =
+                    (rs) -> {
+                        List<T> lBefore = force();
+                        for (T item : lBefore)
+                            rs.addAll(f.apply(item));
+                    };
+            return new LazyMapHelper<>(newOps);
+        }
+
+        public LazyMapHelper<T> filter(Predicate<T> p) {
+            final Consumer<List<T>> newOps =
+                    (rs) -> {
+                        List<T> lBefore = force();
+                        for (T item : lBefore)
                             if (p.test(item)) rs.add(item);
                     };
-            return new LazyMapHelper<>(list, newOps);
+            return new LazyMapHelper<>(newOps);
         }
     }
 
