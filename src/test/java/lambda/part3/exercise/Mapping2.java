@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -23,23 +24,23 @@ public class Mapping2 {
     @SuppressWarnings("WeakerAccess")
     private static class LazyMapHelper<T, R> {
         private final List<T> list;
-        private final BiConsumer<List<T>, List<R>> operations;
+        private final Consumer<List<R>> operations;
 
         public static <T> LazyMapHelper<T, T> ofList(List<T> list) {
-            final BiConsumer<List<T>, List<T>> noOps = (inputList, outputList) -> outputList.addAll(inputList);
+            final Consumer<List<T>> noOps = (outputList) -> outputList.addAll(list);
 
             return new LazyMapHelper<>(list, noOps);
         }
 
         public List<R> force() {
             List<R> result = new ArrayList<>();
-            operations.accept(list, result);
+            operations.accept(result);
             return result;
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            final BiConsumer<List<T>, List<R2>> newOps =
-                    (ls, rs) -> {
+            final Consumer<List<R2>> newOps =
+                    (rs) -> {
                         List<R> lBefore = force();
                         for (R item : lBefore)
                             rs.add(f.apply(item));
@@ -48,8 +49,8 @@ public class Mapping2 {
         }
 
         public <R2> LazyMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            final BiConsumer<List<T>, List<R2>> newOps =
-                    (ls, rs) -> {
+            final Consumer<List<R2>> newOps =
+                    (rs) -> {
                         List<R> lBefore = force();
                         for (R item : lBefore)
                             rs.addAll(f.apply(item));
@@ -58,8 +59,8 @@ public class Mapping2 {
         }
 
         public LazyMapHelper<T, R> filter(Predicate<R> p) {
-            final BiConsumer<List<T>, List<R>> newOps =
-                    (ls, rs) -> {
+            final Consumer<List<R>> newOps =
+                    (rs) -> {
                         List<R> lBefore = force();
                         for (R item : lBefore)
                             if (p.test(item)) rs.add(item);
