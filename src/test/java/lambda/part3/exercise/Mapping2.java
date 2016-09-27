@@ -3,6 +3,8 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -17,54 +19,49 @@ import static org.junit.Assert.assertEquals;
 
 public class Mapping2 {
 
-    @FunctionalInterface
-    interface LazyMapHelper<T> {
-        Consumer<List<T>> operations();
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    @SuppressWarnings("WeakerAccess")
+    private static class LazyMapHelper<T> {
+        private final Consumer<List<T>> operations;
 
-        static <T> LazyMapHelper<T> ofList(List<T> list) {
-            final Consumer<List<T>> noOps = (outputList) -> outputList.addAll(list);
-            return withOps(noOps);
+        public LazyMapHelper(List<T> list) {
+            operations = outputList -> outputList.addAll(list);
         }
 
-        // In Java 9, this method will be private.
-        static <T> LazyMapHelper<T> withOps(Consumer<List<T>> ops) {
-            return () -> ops;
-        }
-
-        default List<T> force() {
+        public List<T> force() {
             List<T> result = new ArrayList<>();
-            operations().accept(result);
+            operations.accept(result);
             return result;
         }
 
-        default <R> LazyMapHelper<R> map(Function<T, R> f) {
+        public <R> LazyMapHelper<R> map(Function<T, R> f) {
             final Consumer<List<R>> newOps =
                     (rs) -> {
                         List<T> lBefore = force();
                         for (T item : lBefore)
                             rs.add(f.apply(item));
                     };
-            return withOps(newOps);
+            return new LazyMapHelper<>(newOps);
         }
 
-        default <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
+        public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f) {
             final Consumer<List<R>> newOps =
                     (rs) -> {
                         List<T> lBefore = force();
                         for (T item : lBefore)
                             rs.addAll(f.apply(item));
                     };
-            return withOps(newOps);
+            return new LazyMapHelper<>(newOps);
         }
 
-        default LazyMapHelper<T> filter(Predicate<T> p) {
+        public LazyMapHelper<T> filter(Predicate<T> p) {
             final Consumer<List<T>> newOps =
                     (rs) -> {
                         List<T> lBefore = force();
                         for (T item : lBefore)
                             if (p.test(item)) rs.add(item);
                     };
-            return withOps(newOps);
+            return new LazyMapHelper<>(newOps);
         }
     }
 
@@ -92,11 +89,11 @@ public class Mapping2 {
 
     @Test
     public void lazy_mapping() {
-        final List<Employee> mappedEmployees = LazyMapHelper.ofList(employees)
-                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(e -> e.withJobHistory(replaceQA(e.getJobHistory())))
-                .force();
+        final List<Employee> mappedEmployees = new LazyMapHelper<>(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(replaceQA(e.getJobHistory())))
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -125,10 +122,10 @@ public class Mapping2 {
 
     @Test
     public void flatMapping() {
-        final List<JobHistoryEntry> teamExperienceInQA = LazyMapHelper.ofList(employees)
-                .flatMap(Employee::getJobHistory)
-                .filter(jhe -> jhe.getPosition().equals("qa"))
-                .force();
+        final List<JobHistoryEntry> teamExperienceInQA = new LazyMapHelper<>(employees)
+                        .flatMap(Employee::getJobHistory)
+                        .filter(jhe -> jhe.getPosition().equals("qa"))
+                        .force();
         assertEquals(3, teamExperienceInQA.size());
     }
 
