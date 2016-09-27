@@ -145,20 +145,4 @@ public class FilterMap {
                 .isEmpty();
     }
 
-    final List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> entries) {
-        return new LazyCollectionHelper<>(entries)
-                .map(jobHistoryEntry -> jobHistoryEntry.withDuration(jobHistoryEntry.getDuration() + 1))
-                .force();
-    }
-
-    final List<JobHistoryEntry> replaceQaToQA(List<JobHistoryEntry> entries) {
-        return new LazyCollectionHelper<>(entries)
-                .map(j -> {
-                    if (j.getPosition().equals("qa")) {
-                        return j.withPosition(j.getPosition().toUpperCase());
-                    } else
-                        return j;
-                })
-                .force();
-    }
 }
