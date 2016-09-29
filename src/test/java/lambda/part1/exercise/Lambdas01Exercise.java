@@ -1,5 +1,8 @@
 package lambda.part1.exercise;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import data.Person;
 import org.junit.Test;
@@ -21,13 +24,17 @@ public class Lambdas01Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
+        Arrays.sort(persons, new Comparator<Person>() {
+            public int compare(Person o1, Person o2) {
+                return o2.getFirstName().compareTo(o1.getFirstName());
+            }
+        });
 
-        assertArrayEquals(persons, new Person[]{
+        assertArrayEquals(new Person[]{
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 2", "lastName 1", 30),
                 new Person("name 1", "lastName 2", 40),
-        });
+        }, persons);
     }
 
     @Test
@@ -38,10 +45,15 @@ public class Lambdas01Exercise {
                 new Person("name 2", "lastName 1", 30)
         );
 
-        Person person = null;
+        final Optional<Person> personOptional =
+                FluentIterable.from(persons)
+                        .firstMatch(new Predicate<Person>() {
+                            public boolean apply(Person p) {
+                                return p.getFirstName().equals("name 1");
+                            }
+                        });
 
-        // TODO use FluentIterable
-
-        assertEquals(person, new Person("name 1", "lastName 2", 30));
+        Person person = personOptional.get();
+        assertEquals(new Person("name 1", "lastName 2", 30), person);
     }
 }
