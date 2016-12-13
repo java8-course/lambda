@@ -15,7 +15,6 @@ public class ArrowNotationExercise {
     public void getAge() {
         // Person -> Integer
         final Function<Person, Integer> getAge = Person::getAge; // TODO
-
         assertEquals(Integer.valueOf(33), getAge.apply(new Person("", "", 33)));
     }
 
