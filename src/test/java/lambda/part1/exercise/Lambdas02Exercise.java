@@ -6,6 +6,7 @@ import data.Person;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -21,7 +22,7 @@ public class Lambdas02Exercise {
         };
 
         // TODO use Arrays.sort
-        Arrays.sort(persons,(o1, o2) -> o1.getAge() - o2.getAge());
+        Arrays.sort(persons, Comparator.comparingInt((o)->o.getAge()));
 
 
         assertArrayEquals(persons, new Person[]{
