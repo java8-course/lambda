@@ -1,9 +1,18 @@
 package lambda.part3.exercise;
 
+import data.Employee;
+import data.JobHistoryEntry;
+import data.Person;
+import org.junit.Test;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static org.junit.Assert.assertEquals;
 
 public class FilterMap {
 
@@ -49,14 +58,91 @@ public class FilterMap {
             return new LazyCollectionHelper<>(list, newActions);
         }
 
-        public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
+        public <R> LazyCollectionHelper<T> map(Function<T, R> function) {
             // TODO
-            throw new UnsupportedOperationException();
+            List<Container<Object, Object>> newActions = new ArrayList<>(actions);
+            newActions.add(new Container<>((Function<Object, Object>) function));
+            return new LazyCollectionHelper<>(list, newActions);
         }
 
         public List<T> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            List<T> result = new ArrayList<>();
+
+            for (T t: list) {
+                Object temp = t;
+                for (Object action: actions) {
+                    if (((Container)action).getFunction() != null) {
+                        temp = ((Container) action).getFunction().apply(temp);
+                    } else {
+                        if ( !((Container) action).getPredicate().test(t)) {
+                            temp = null;
+                        }
+                    }
+                }
+                if (temp != null) {
+                    result.add((T) temp);
+                }
+            }
+            return result;
         }
     }
+
+    @Test
+    public void lazyFilterMap() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> mappedEmployees =
+                new LazyCollectionHelper<>(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .filter(e -> workedAsDev(e))
+                        .force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private static boolean workedAsDev(Employee e) {
+        return ! new LazyCollectionHelper<>(e.getJobHistory())
+                .filter(j -> j.getPosition().equals("dev"))
+                .force()
+                .isEmpty();
+    }
+
 }
