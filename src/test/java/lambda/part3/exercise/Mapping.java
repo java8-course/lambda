@@ -30,8 +30,9 @@ public class Mapping {
         }
 
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            list.forEach(t -> result.add(f.apply(t)));
+            return new MapHelper<R>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -79,6 +80,9 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map()
                 .getList();
 
         final List<Employee> expectedResult =
