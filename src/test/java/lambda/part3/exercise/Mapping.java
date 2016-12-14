@@ -129,8 +129,45 @@ public class Mapping {
         }
 
         // TODO *
-        // public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f)
+        // public <R2> LazyMapHelper<T, R2> flatMap(Function<R, List<R2>> f)
     }
+
+    private static class LazyFlatMapHelper<T, R> {
+
+        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+        }
+
+        public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
+            throw new UnsupportedOperationException();
+        }
+
+        public List<R> force() {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+
+        // TODO filter
+        // (T -> boolean) -> (T -> [T])
+        // filter: [T1, T2] -> (T -> boolean) -> [T2]
+        // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
+
+        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
+            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
+            return flatMap(listFunction);
+        }
+
+        // (R -> R2) -> (R -> [R2])
+        private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
+            throw new UnsupportedOperationException();
+        }
+
+        // TODO *
+        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+
 
     @Test
     public void lazy_mapping() {
