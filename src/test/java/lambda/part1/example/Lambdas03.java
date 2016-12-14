@@ -6,6 +6,10 @@ import static org.junit.Assert.assertEquals;
 
 public class Lambdas03 {
 
+    // SAM interface
+    //
+
+    @FunctionalInterface
     private interface GenericSum<T> {
         T sum(T a, T b);
 

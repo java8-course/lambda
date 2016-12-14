@@ -29,6 +29,8 @@ public class Mapping {
             return list;
         }
 
+        // [T] -> (T -> R) -> [R]
+        // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
             // TODO
             throw new UnsupportedOperationException();
@@ -40,7 +42,7 @@ public class Mapping {
         // flatMap: [T, T, T], T -> [R] => [R1, R2, R3, R4, R5]
         public <R> MapHelper<R> flatMap(Function<T, List<R>> f) {
             final List<R> result = new ArrayList<R>();
-            list.forEach(t ->
+            list.forEach((T t) ->
                     f.apply(t).forEach(result::add)
             );
 
@@ -108,13 +110,8 @@ public class Mapping {
 
 
     private static class LazyMapHelper<T, R> {
-        private final Function<T, R> function;
-        private final List<T> list;
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
-
-            this.list = list;
-            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -122,127 +119,17 @@ public class Mapping {
         }
 
         public List<R> force() {
-            return new MapHelper<>(list).map(function).getList();
+            // TODO
+            throw new UnsupportedOperationException();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            return new LazyMapHelper<T, R2>(list, function.andThen(f));
+            // TODO
+            throw new UnsupportedOperationException();
         }
 
         // TODO *
         // public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f)
-    }
-
-    private static class LazyFlatMapHelper<T, R> {
-        private final BiConsumer<List<T>, Consumer<R>> forEachR;
-        private final List<T> list;
-
-        public LazyFlatMapHelper(List<T> list, BiConsumer<List<T>, Consumer<R>> forEachR) {
-
-            this.list = list;
-            this.forEachR = forEachR;
-        }
-
-        public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            final BiConsumer<List<T>, Consumer<T>> traverse = (ts, c) -> {
-                for (T t : ts) {
-                    c.accept(t);
-                }
-            };
-            return new LazyFlatMapHelper<>(list, traverse);
-        }
-
-        public List<R> force() {
-            final List<R> result = new ArrayList<R>();
-
-            forEachR.accept(list, result::add);
-
-            return result;
-        }
-
-        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-
-            BiConsumer<List<T>, Consumer<R2>> forEachR2 = (ts, consR2) ->
-                    forEachR.accept(ts, r ->
-                            f.apply(r).forEach(consR2)
-                    );
-            return new LazyFlatMapHelper<T, R2>(list, forEachR2);
-        }
-
-        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            return flatMap(f.andThen(Collections::singletonList));
-        }
-
-        public LazyFlatMapHelper<T, R> filter(Predicate<R> p) {
-            return flatMap(r ->
-                    p.test(r)
-                            ? Collections.singletonList(r)
-                            : Collections.emptyList());
-        }
-    }
-
-    private static interface Collection<T> {
-        void forEach(Consumer<T> c);
-
-        default List<T> toList() {
-            final List<T> result = new ArrayList<T>();
-
-            forEach(result::add);
-
-            return result;
-        }
-
-        default Collection<T> filter(Predicate<T> p) {
-            final Collection<T> self = this;
-            return new Collection<T>() {
-                @Override
-                public void forEach(Consumer<T> c) {
-                    self.forEach(t -> {
-                        if(p.test(t)) {
-                            c.accept(t);
-                        }
-                    });
-                }
-            };
-        }
-
-        default <R> Collection<R> map(Function<T, R> f) {
-            final Collection<T> self = this;
-            return new Collection<R>() {
-                @Override
-                public void forEach(Consumer<R> c) {
-                    self.forEach(t -> c.accept(f.apply(t)));
-                }
-            };
-        }
-
-        default <R> Collection<R> flatMap(Function<T, Collection<R>> f) {
-            final Collection<T> self = this;
-            return new Collection<R>() {
-                @Override
-                public void forEach(Consumer<R> c) {
-                    self.forEach(t -> {
-                        f.apply(t).forEach(c);
-                    });
-                }
-            };
-        }
-    }
-
-    private static class CollectionImpl<T> implements Collection<T> {
-
-
-        private final List<T> list;
-
-        public CollectionImpl(List<T> list) {
-
-            this.list = list;
-        }
-
-        @Override
-        public void forEach(Consumer<T> c) {
-            list.forEach(c);
-        }
     }
 
     @Test

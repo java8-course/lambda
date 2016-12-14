@@ -25,8 +25,8 @@ public class Lambdas02 {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        Arrays.sort(persons, (o1, o2) -> o1.getLastName().compareTo(o2.getFirstName()));
-        //Arrays.sort(persons, Comparator.comparing(p -> p.getFirstName()));
+        Arrays.sort(persons, (o1, o2) -> o1.getLastName().compareTo(o2.getLastName()));
+//        Arrays.sort(persons, Comparator.comparing(p -> p.getLastName()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 2", "lastName 1", 30),
