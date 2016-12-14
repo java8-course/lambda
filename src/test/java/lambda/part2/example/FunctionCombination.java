@@ -17,7 +17,7 @@ public class FunctionCombination {
         assertEquals(Integer.valueOf(5), lastNameLength.apply(new Person("a", "abcde", 0)));
     }
 
-    // (Person -> String, String -> Integer) -> (Person, Integer)
+    // (Person -> String, String -> Integer) -> (Person -> Integer)
     private Function<Person, Integer> personStringPropertyToInt(
             Function<Person, String> personToString,
             Function<String, Integer> stringToInteger) {
@@ -39,7 +39,7 @@ public class FunctionCombination {
 
     // (A -> B, B -> C) -> A -> C
     private <A, B, C> Function<A, C> andThen(Function<A, B> f1, Function<B, C> f2) {
-        throw new UnsupportedOperationException();
+        return a -> f2.apply(f1.apply(a));
     }
 
     @Test

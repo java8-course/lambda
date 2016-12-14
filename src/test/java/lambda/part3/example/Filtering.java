@@ -13,9 +13,47 @@ import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
-// https://github.com/senia-psm/java-lambda
-
 public class Filtering {
+    @Test
+    public void filtering0() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("Bob", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "QA", "yandex"),
+                                        new JobHistoryEntry(1, "QA", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("John", "White", 50),
+                                Arrays.asList(
+                                        new JobHistoryEntry(5, "QA", "epam")
+                                ))
+                );
+
+        // Johns with dev experience worked in epam more then 1 year
+
+        final List<Employee> result = new ArrayList<>();
+        for (Employee employee : employees) {
+            final boolean isJohn = employee.getPerson().getFirstName().equals("John");
+
+        }
+    }
+
+
     public static class FilterUtil<T> {
         private final List<T> list;
 
@@ -27,14 +65,16 @@ public class Filtering {
             return list;
         }
 
+        // [T] -> (T -> boolean) -> [T]
         private FilterUtil<T> filter(Predicate<T> condition) {
-            final List<T> result = new ArrayList<T>();
+            final List<T> res = new ArrayList<T>();
             for (T t : list) {
                 if (condition.test(t)) {
-                    result.add(t);
+                    res.add(t);
                 }
             }
-            return new FilterUtil<T>(result);
+
+            return new FilterUtil<T>(res);
         }
     }
 
@@ -57,6 +97,12 @@ public class Filtering {
     public void filtering() {
         final List<Employee> employees =
                 Arrays.asList(
+                        new Employee(
+                                new Person("Bob", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
                         new Employee(
                                 new Person("John", "Galt", 30),
                                 Arrays.asList(
@@ -110,8 +156,8 @@ public class Filtering {
         }
 
         private LazyFilterUtil<T> filter(Predicate<T> condition) {
-            Predicate<T> combined = combine(this.condition, condition);
-            return new LazyFilterUtil<T>(list, combined);
+            final Predicate<T> combinedCondition = combine(this.condition, condition);
+            return new LazyFilterUtil<T>(list, combinedCondition);
         }
 
         private Predicate<T> combine(Predicate<T> c1, Predicate<T> c2) {
