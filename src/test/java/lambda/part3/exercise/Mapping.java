@@ -128,8 +128,6 @@ public class Mapping {
             throw new UnsupportedOperationException();
         }
 
-        // TODO *
-        // public <R2> LazyMapHelper<T, R2> flatMap(Function<R, List<R2>> f)
     }
 
     private static class LazyFlatMapHelper<T, R> {
