@@ -8,34 +8,7 @@ import static org.junit.Assert.assertEquals;
 
 public class Lambdas03Exercise {
 
-    private interface GenericProduct<T> {
-        T prod(T a, int i);
-
-        default T twice(T t) {
-            return prod(t, 2);
-        }
-    }
-
-    @Test
-    public void generic0() {
-        final GenericProduct<Integer> prod = null; // Use anonymous class
-
-        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
-    }
-
-    @Test
-    public void generic1() {
-        final GenericProduct<Integer> prod = null; // Use statement lambda
-
-        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
-    }
-
-    @Test
-    public void generic2() {
-        final GenericProduct<Integer> prod = null; // Use expression lambda
-
-        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
-    }
+    private final String delimeter = "-";
 
     private static String stringProd(String s, int i) {
         final StringBuilder sb = new StringBuilder();
@@ -46,13 +19,43 @@ public class Lambdas03Exercise {
     }
 
     @Test
+    public void generic0() {
+        // Use anonymous class
+        final GenericProduct<Integer> prod = new GenericProduct<Integer>() {
+            @Override
+            public Integer prod(Integer a, int i) {
+                return a * i;
+            }
+        };
+
+        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
+    }
+
+    @Test
+    public void generic1() {
+        // Use statement lambda - use return
+        final GenericProduct<Integer> prod = (Integer a, int i) -> {
+            return a * i;
+        };
+
+        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
+    }
+
+    @Test
+    public void generic2() {
+        // Use expression lambda
+        final GenericProduct<Integer> prod = (a, i) -> a * i;
+
+        assertEquals(prod.prod(3, 2), Integer.valueOf(6));
+    }
+
+    @Test
     public void strSum() {
-        final GenericProduct<String> prod = null; // use stringProd;
+        // use stringProd;
+        final GenericProduct<String> prod = Lambdas03Exercise::stringProd;
 
         assertEquals(prod.prod("a", 2), "aa");
     }
-
-    private final String delimeter = "-";
 
     private String stringSumWithDelimeter(String s, int i) {
         final StringJoiner sj = new StringJoiner(delimeter);
@@ -64,9 +67,18 @@ public class Lambdas03Exercise {
 
     @Test
     public void strSum2() {
-        final GenericProduct<String> prod = null; // use stringSumWithDelimeter;
+        // use stringSumWithDelimeter;
+        final GenericProduct<String> prod = this::stringSumWithDelimeter;
 
         assertEquals(prod.prod("a", 3), "a-a-a");
+    }
+
+    private interface GenericProduct<T> {
+        T prod(T a, int i);
+
+        default T twice(T t) {
+            return prod(t, 2);
+        }
     }
 
 
