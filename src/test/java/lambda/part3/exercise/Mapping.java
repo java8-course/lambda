@@ -31,7 +31,13 @@ public class Mapping {
 
         public <R> MapHelper<R> map(Function<T, R> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            List<R> newList = new ArrayList<>();
+            list.forEach(t -> newList.add(f.apply(t)));
+//            for (T t : list) {
+//                newList.add(f.apply(t));
+//            }
+            return new MapHelper<>(newList);
+//            throw new UnsupportedOperationException();
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -74,6 +80,14 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(new MapHelper<>(e.getJobHistory())
+                                .map(j -> new JobHistoryEntry(
+                                        j.getDuration() + 1,
+                                        j.getPosition().equals("qa") ? "QA" : j.getPosition(),
+                                        j.getEmployer()))
+                                .getList()
+                        ))
                 /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
@@ -271,6 +285,22 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(
+                                new LazyMapHelper<>(e.getJobHistory(),
+                                j -> new JobHistoryEntry(
+                                        j.getDuration() + 1,
+                                        j.getPosition().equals("qa") ? "QA" : j.getPosition(),
+                                        j.getEmployer()
+                                )).force()))
+
+                                e.getJobHistory())
+                                .map(j -> new JobHistoryEntry(
+                                        j.getDuration() + 1,
+                                        j.getPosition().equals("qa") ? "QA" : j.getPosition(),
+                                        j.getEmployer()))
+                                .getList()
+                        ))
                 /*
                 .map(TODO) // change name to John
                 .map(TODO) // add 1 year to experience duration
