@@ -38,12 +38,17 @@ public class OtherClasses {
     // Arity 1
     public void consumers() {
         final Consumer<String> stringConsumer = System.out::println;
-
         stringConsumer.accept("Some string");
 
-        // IntConsumer
-        // LongConsumer
-        // DoubleConsumer
+        final Consumer<Integer> intConsumer = System.out::println;
+        intConsumer.accept(666);
+
+        final Consumer<Long> longConsumer = System.out::println;
+        longConsumer.accept(666L);
+
+        final Consumer<Double> doubleConsumer = System.out::println;
+        doubleConsumer.accept(666D);
+
     }
 
     @Test
@@ -51,15 +56,16 @@ public class OtherClasses {
     // Arity 1
     public void unaryOperator() {
         final UnaryOperator<String> reverse = s -> new StringBuilder(s).reverse().toString();
-
         assertEquals("abc", reverse.apply("cba"));
 
-        final IntUnaryOperator negate = i -> -i;
+        final IntUnaryOperator negateI = i -> -i;
+        assertEquals(-1, negateI.applyAsInt(1));
 
-        assertEquals(-1, negate.applyAsInt(1));
+        final LongUnaryOperator negateL = i -> -i;
+        assertEquals(-1L, negateL.applyAsLong(1L));
 
-        // LongUnaryOperator
-        // DoubleUnaryOperator
+        final DoubleUnaryOperator negateD = i -> -i;
+        assertEquals(-1D, negateD.applyAsDouble(1D), 0.01D);
     }
 
     @Test
@@ -100,11 +106,14 @@ public class OtherClasses {
         final BinaryOperator<String> concat = String::concat;
         assertEquals("ab", concat.apply("a", "b"));
 
-        final IntBinaryOperator sum = (i1, i2) -> i1 + i2;
-        assertEquals(3, sum.applyAsInt(1, 2));
+        final IntBinaryOperator sumI = (i1, i2) -> i1 + i2;
+        assertEquals(3, sumI.applyAsInt(1, 2));
 
-        // LongBinaryOperator
-        // DoubleBinaryOperator
+        final LongBinaryOperator sumL = (i1, i2) -> i1 + i2;
+        assertEquals(3L, sumL.applyAsLong(1L, 2L));
+
+        final DoubleBinaryOperator sumD = (i1, i2) -> i1 + i2;
+        assertEquals(3D, sumD.applyAsDouble(1D, 2D), 0.01D);
     }
 
     @Test
@@ -128,16 +137,20 @@ public class OtherClasses {
     // Arity 2
     public void biPredicate() {
         final BiPredicate<String, Person> checkFirstName = (s, p) -> s.equals(p.getFirstName());
+        assertEquals(true, checkFirstName.test("c", new Person("c", "b", 0)));
     }
 
     @Test
     // BiConsumer: (A, B) -> void
     // Arity 2
     public void biConsumers() {
-        final BiConsumer<Person, String> biConsumer = null;
+        final BiConsumer<Person, String> biConsumer = (p, s) -> System.out.println(p.getFirstName().replace("a", s));
+        biConsumer.accept(new Person("Vasia", "Pupkin", 0), "i");
 
-        final ObjIntConsumer<String> checkLength = null;
+        final ObjIntConsumer<String> checkLength = (s, i) -> System.out.println(s.length()==i);
+        checkLength.accept("John", 4);
     }
+
 
     private interface PersonFactory {
         Person create(String name, String lastName, int age);
