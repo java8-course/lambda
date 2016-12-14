@@ -23,7 +23,7 @@ public class OtherClasses {
         final BooleanSupplier booleanSupplier = () -> true;
         assertEquals(true, booleanSupplier.getAsBoolean());
 
-        final IntSupplier intSupplier = ThreadLocalRandom.current()::nextInt;
+        final IntSupplier intSupplier = () -> ThreadLocalRandom.current().nextInt();
         assertNotEquals(intSupplier.getAsInt(), intSupplier.getAsInt());
 
         final LongSupplier longSupplier = () -> Integer.MAX_VALUE + 100L;
@@ -97,7 +97,7 @@ public class OtherClasses {
     // BinaryOperator: (T, T) -> T
     // Arity 2
     public void binaryOperators() {
-        final BinaryOperator<String> concat = (s1, s2) -> s1 + s2;
+        final BinaryOperator<String> concat = String::concat;
         assertEquals("ab", concat.apply("a", "b"));
 
         final IntBinaryOperator sum = (i1, i2) -> i1 + i2;

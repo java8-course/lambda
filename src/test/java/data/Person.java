@@ -23,6 +23,10 @@ public class Person {
         return lastName;
     }
 
+    public static String getLastName2(Person person) {
+        return person.getLastName();
+    }
+
     public int getAge() {
         return age;
     }
