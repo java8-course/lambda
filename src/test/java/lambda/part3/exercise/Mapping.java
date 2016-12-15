@@ -164,8 +164,9 @@ public class Mapping {
         }
 
         public List<R> force() {
+            return new MapHelper<>(list).map(function).getList();
             // TODO
-            throw new UnsupportedOperationException();
+//            throw new UnsupportedOperationException();
         }
 
         // TODO: filter
