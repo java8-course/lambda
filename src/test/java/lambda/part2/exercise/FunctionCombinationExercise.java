@@ -40,7 +40,7 @@ public class FunctionCombinationExercise {
     @Test
     public void personHasNotEmptyLastNameAndFirstName1() {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
-        final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
+     g   final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
         final Predicate<Person> validateFirstName = negate1(hasEmptyFirstName);
         final Predicate<Person> validateLastName = negate1(hasEmptyLastName);
