@@ -49,6 +49,7 @@ public class FilterMap {
             return new LazyCollectionHelper<>(list, newActions);
         }
 
+        //     <R> makes us apply function right away to transform list<T> to list<R>
         public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
             // TODO
             throw new UnsupportedOperationException();
