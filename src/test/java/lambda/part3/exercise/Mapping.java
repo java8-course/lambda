@@ -54,6 +54,18 @@ public class Mapping {
         }
     }
 
+    private List<JobHistoryEntry> addOneYear (List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory)
+                .map(e -> e.withDuration(e.getDuration() + 1))
+                .getList();
+    }
+
+    private List<JobHistoryEntry> replaceqaQA (List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory)
+                .map(e -> e.withPosition(e.getPosition().equals("qa") ? "QA" : e.getPosition()))
+                .getList();
+    }
+
     @Test
     public void mapping() {
         final List<Employee> employees =
@@ -78,16 +90,13 @@ public class Mapping {
                                 ))
                 );
 
+//        private List<JobHistoryEntry> addOneYear
+
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                        .map(e -> e.withJobHistory(new MapHelper<>(e.getJobHistory())
-                                .map(j -> new JobHistoryEntry(
-                                        j.getDuration() + 1,
-                                        j.getPosition().equals("qa") ? "QA" : j.getPosition(),
-                                        j.getEmployer()))
-                                .getList()
-                        ))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(replaceqaQA(e.getJobHistory())))
                 /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
@@ -149,41 +158,6 @@ public class Mapping {
 
         // TODO *
         // public <R> LazyMapHelper<R> flatMap(Function<T, List<R>> f)
-    }
-
-    private static class LazyFlatMapHelper<T, R> {
-        List<T> list;
-        Function<T, R> function;
-
-        public LazyFlatMapHelper(List<T> list, Function<T, R> function) {
-            this.list = list;
-            this.function = function;
-        }
-
-        public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper<>(list, Function.identity());
-        }
-
-        public List<R> force() {
-            // TODO
-            return new MapHelper<>(list).map(function).getList();
-//            throw new UnsupportedOperationException();
-        }
-
-        // TODO: filter
-        // (T -> boolean) -> (T -> [T])
-        // filter: [T1, T2] -> (T -> boolean) -> [T2]
-        // flatMap: [T1, T2] -> (T -> [T]) -> [T2]
-
-        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            // TODO
-            return flatMap(f.andThen(Collections::singletonList));
-        }
-
-        // TODO *
-        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            return new LazyFlatMapHelper<>(list, function.andThen(f).andThen(c -> c.get(0)));
-        }
     }
 
     @Test
@@ -250,5 +224,43 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private static class LazyFlatMapHelper<T, R> {
+        List<T> list;
+        Function<T, R> function;
+
+        public LazyFlatMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
+        }
+
+        public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
+            return new LazyFlatMapHelper<>(list, Function.identity());
+        }
+
+        public List<R> force() {
+            // TODO
+            return new MapHelper<>(list).map(function).getList();
+//            throw new UnsupportedOperationException();
+        }
+
+        // TODO: filter
+        // (T -> boolean) -> (T -> [T])
+        // filter: [T1, T2] -> (T -> boolean) -> [T2]
+        // flatMap: [T1, T2] -> (T -> [T]) -> [T2]
+        private LazyFlatMapHelper<T,R> filter (){
+            throw new UnsupportedOperationException("NOT DONE YET!");
+        }
+
+        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
+            // TODO
+            return flatMap(f.andThen(Collections::singletonList));
+        }
+
+        // TODO *
+        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
+            return new LazyFlatMapHelper<>(list, function.andThen(f).andThen(c -> c.get(0)));
+        }
     }
 }
