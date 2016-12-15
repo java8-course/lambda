@@ -42,12 +42,12 @@ public class ArrowNotationExercise {
         final Function<Person, String> getFullName = ArrowNotationExercise.getFullName;
 
         // (Person, Person) -> Integer
-        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName =
-                ArrowNotationExercise.ageOfPersonWithTheLongestFullName.apply(getFullName);
+        final BiFunction<Person, Person, Integer> getAgeOfPersonWithTheLongestFullName =
+                ageOfPersonWithTheLongestFullName.apply(getFullName);
 
         assertEquals(
                 Integer.valueOf(1),
-                ageOfPersonWithTheLongestFullName.apply(
+                getAgeOfPersonWithTheLongestFullName.apply(
                         new Person("a", "b", 2),
                         new Person("aa", "b", 1)));
     }
