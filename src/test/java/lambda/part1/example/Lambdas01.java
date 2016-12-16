@@ -19,6 +19,8 @@ import static org.junit.Assert.assertEquals;
 
 // JSR-335 Lambda Expressions for the Java Programming Language
 
+// https://github.com/java8-course/lambda
+
 public class Lambdas01 {
 
     @Test
