@@ -165,10 +165,62 @@ public class Mapping {
         }
     }
 
+    interface LazyCollection<T> {
 
+        void forEach(Consumer<T> consumer);
+
+        default List<T> toList(){
+            final ArrayList<T> result = new ArrayList<T>();
+            forEach(result::add);
+            return result;
+        }
+
+        default LazyCollection<T> filter(Predicate<T> condition){
+            final LazyCollection<T> self = this;
+            return consumer -> self.forEach(t -> {
+                if (condition.test(t)){
+                    consumer.accept(t);
+                }
+            });
+
+        }
+
+        default <R> LazyCollection<R> map(Function<T,R> f){
+            final LazyCollection<T> self = this;
+            return consumer -> self.forEach(t -> consumer.accept(f.apply(t)));
+        }
+
+        default <R> LazyCollection<R> flatMap(Function<T,List<R>> f){
+            final LazyCollection<T> self = this;
+            return consumer -> self.forEach(t -> {
+                for (R r : f.apply(t)){
+                    consumer.accept(r);
+                }
+            });
+        }
+    }
+
+    public static class LazyCollectionImpl<T> implements LazyCollection<T>{
+
+        final List<T> list;
+
+        public LazyCollectionImpl(List<T> list) {
+            this.list = list;
+        }
+
+        @Override
+        public void forEach(Consumer<T> consumer) {
+            list.forEach(consumer);
+        }
+
+        public static <R> LazyCollectionImpl<R> from(List<R> list){
+            return new LazyCollectionImpl<R>(list);
+        }
+
+    }
 
     @Test
-    public void lazy_mapping() {
+    public void lazyCollectionTest() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(
@@ -191,14 +243,12 @@ public class Mapping {
                                 ))
                 );
 
-        final List<Employee> mappedEmployees =
-                LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
-                .force();
+        final List<Employee> mappedEmployees = LazyCollectionImpl.from(employees)
+                .filter(e -> !e.getPerson().getLastName().equals("Doe"))
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory(changeQa(e.getJobHistory())))
+                .toList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -209,13 +259,6 @@ public class Mapping {
                                         new JobHistoryEntry(2, "dev", "google")
                                 )),
                         new Employee(
-                                new Person("John", "Doe", 40),
-                                Arrays.asList(
-                                        new JobHistoryEntry(4, "QA", "yandex"),
-                                        new JobHistoryEntry(2, "QA", "epam"),
-                                        new JobHistoryEntry(2, "dev", "abc")
-                                )),
-                        new Employee(
                                 new Person("John", "White", 50),
                                 Collections.singletonList(
                                         new JobHistoryEntry(6, "QA", "epam")
@@ -223,5 +266,26 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+
+    }
+
+    private List<JobHistoryEntry> changeQa(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> result = new ArrayList<>();
+        for (JobHistoryEntry entry : jobHistory){
+            if (entry.getPosition().equals("qa")){
+                result.add(entry.withPosition("QA"));
+            } else{
+                result.add(entry);
+            }
+        }
+        return result;
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> result = new ArrayList<>();
+        for (JobHistoryEntry entry : jobHistory){
+            result.add(entry.withDuration(entry.getDuration()+1));
+        }
+        return result;
     }
 }
