@@ -186,7 +186,7 @@ public class Mapping {
 
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            return r -> r != null ? Collections.singletonList(f.apply(r)) : Collections.emptyList();
+            return r -> Collections.singletonList(f.apply(r));
         }
 
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
