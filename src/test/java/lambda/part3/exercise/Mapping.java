@@ -176,8 +176,7 @@ public class Mapping {
         }
 
         default LazyCollection<T> filter(Predicate<T> condition){
-            final LazyCollection<T> self = this;
-            return consumer -> self.forEach(t -> {
+            return consumer -> forEach(t -> {
                 if (condition.test(t)){
                     consumer.accept(t);
                 }
@@ -186,13 +185,11 @@ public class Mapping {
         }
 
         default <R> LazyCollection<R> map(Function<T,R> f){
-            final LazyCollection<T> self = this;
-            return consumer -> self.forEach(t -> consumer.accept(f.apply(t)));
+            return consumer -> forEach(t -> consumer.accept(f.apply(t)));
         }
 
         default <R> LazyCollection<R> flatMap(Function<T,List<R>> f){
-            final LazyCollection<T> self = this;
-            return consumer -> self.forEach(t -> {
+            return consumer -> forEach(t -> {
                 for (R r : f.apply(t)){
                     consumer.accept(r);
                 }
