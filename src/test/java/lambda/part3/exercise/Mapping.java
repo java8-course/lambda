@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +33,7 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<R>(list.stream().map(f).collect(Collectors.toList()));
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -48,6 +48,31 @@ public class Mapping {
 
             return new MapHelper<R>(result);
         }
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> list){
+        int size = list.size();
+        for(int i =0; i < size; i++){
+            JobHistoryEntry jhe = list.get(i);
+            list.remove(i);
+            list.add(i, jhe.withDuration(jhe.getDuration()+1));
+        }
+        return list;
+    }
+
+    private List<JobHistoryEntry> replaceToQA(List<JobHistoryEntry> list){
+
+        List<JobHistoryEntry> tmpList = list.stream()
+               .filter(e -> e.getPosition().equals("qa"))
+               .map(e-> e.withPosition("QA"))
+               .collect(Collectors.toList());
+
+
+       for(JobHistoryEntry job: tmpList){
+          //
+       }
+
+        return list;
     }
 
     @Test
@@ -76,12 +101,15 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e-> e.withJobHistory(replaceToQA(e.getJobHistory())))
                 /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -166,7 +194,6 @@ public class Mapping {
     }
 
 
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -198,7 +225,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
