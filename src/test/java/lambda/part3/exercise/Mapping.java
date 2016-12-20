@@ -329,4 +329,108 @@ public class Mapping {
 
         assertEquals(mappedEmployees, expectedResult);
     }
+
+    interface LazyCollection<T> {
+        void forEach(Consumer<T> c);
+
+        default List<T> toList() {
+            final ArrayList<T> res = new ArrayList<>();
+            forEach(res::add);
+            return res;
+        }
+
+        default <R> LazyCollection<R> map(Function<T, R> f) {
+            final LazyCollection<T> self = this;
+            return new LazyCollection<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default LazyCollection<T> filter(Predicate<T> condition) {
+            return c -> forEach(t -> {
+                if (condition.test(t)) {
+                    c.accept(t);
+                }
+            });
+        }
+
+        default <R> LazyCollection<R> flatMap(Function<T, List<R>> f) {
+            return c -> forEach(t -> {
+                for (R r : f.apply(t)) {
+                    c.accept(r);
+                }
+            });
+        }
+    }
+
+
+
+    public static class LazyCollectionImp<T> implements LazyCollection<T> {
+        private final List<T> list;
+
+        public LazyCollectionImp(List<T> list) {
+            this.list = list;
+        }
+
+        @Override
+        public void forEach(Consumer<T> c) {
+            list.forEach(t ->c.accept(t));
+        }
+
+
+        public static <R> LazyCollectionImp<R> from(List<R> list) {
+            return new LazyCollectionImp<R>(list);
+        }
+
+    }
+
+    @Test
+    public void lazyCollection() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+
+        final List<Employee> mappedEmployees = LazyCollectionImp.from(employees)
+                .filter(e -> e.getPerson().getLastName().equals("Doe"))
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory((replaceqaQA(e.getJobHistory()))))
+                .toList();
+
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
 }
