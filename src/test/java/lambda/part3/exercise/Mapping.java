@@ -53,21 +53,20 @@ public class Mapping {
         }
     }
 
-    private Employee replaceToQA(Employee employee){
-        List<JobHistoryEntry> h = employee.getJobHistory();
+    private Employee replaceToQA(Employee employee) {
 
-        List<JobHistoryEntry> result = new ArrayList<>();
-        for(JobHistoryEntry entry : h){
-            if(entry.getPosition().equals("qa")){
-                entry = entry.withPosition("QA");
-            }
-            result.add(entry);
-        }
+        List<JobHistoryEntry> result = new MapHelper<JobHistoryEntry>(employee.getJobHistory())
+                .map(e -> e.getPosition().equals("qa") ? e.withPosition("QA") : e)
+                .getList();
+
         return employee.withJobHistory(result);
     }
 
-    private  List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> historyEntries){
-        return new MapHelper<>(historyEntries).map(e->e.withDuration(e.getDuration()+1)).getList();
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> historyEntries) {
+
+        return new MapHelper<>(historyEntries)
+                .map(e -> e.withDuration(e.getDuration() + 1))
+                .getList();
     }
 
 
