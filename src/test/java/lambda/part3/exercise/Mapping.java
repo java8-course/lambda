@@ -32,8 +32,11 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<>();
+            for (T item : list) {
+                result.add(f.apply(item));
+            }
+            return new MapHelper<R>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -49,6 +52,24 @@ public class Mapping {
             return new MapHelper<R>(result);
         }
     }
+
+    private Employee replaceToQA(Employee employee){
+        List<JobHistoryEntry> h = employee.getJobHistory();
+
+        List<JobHistoryEntry> result = new ArrayList<>();
+        for(JobHistoryEntry entry : h){
+            if(entry.getPosition().equals("qa")){
+                entry = entry.withPosition("QA");
+            }
+            result.add(entry);
+        }
+        return employee.withJobHistory(result);
+    }
+
+    private  List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> historyEntries){
+        return new MapHelper<>(historyEntries).map(e->e.withDuration(e.getDuration()+1)).getList();
+    }
+
 
     @Test
     public void mapping() {
@@ -76,12 +97,11 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(e.getJobHistory()))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(this::replaceToQA)
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -166,7 +186,6 @@ public class Mapping {
     }
 
 
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -198,7 +217,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
