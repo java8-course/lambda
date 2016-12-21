@@ -97,7 +97,6 @@ public class Mapping {
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                        .map(e -> e.withJobHistory(e.getJobHistory()))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(this::replaceToQA)
                         .getList();
