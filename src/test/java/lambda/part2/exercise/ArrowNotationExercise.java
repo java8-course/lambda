@@ -21,8 +21,8 @@ public class ArrowNotationExercise {
     @Test
     public void compareAges() {
 
-        final BiPredicate<Person, Person> compareAges = (person, person2) -> person.equals(person2);
-        assertEquals(false, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
+        final BiPredicate<Person, Person> compareAges = (person, person2) -> person.getAge() == person2.getAge();
+        assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
     }
 
     private Function<Person, String> getFullName = person -> person.getFirstName() + " " + person.getLastName();
