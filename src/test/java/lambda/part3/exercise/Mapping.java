@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -32,8 +31,9 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            list.forEach(t -> result.add(f.apply(t)));
+            return new MapHelper<R>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +76,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changeQA(e.getJobHistory())))
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -108,10 +106,22 @@ public class Mapping {
         assertEquals(mappedEmployees, expectedResult);
     }
 
+    private static List<JobHistoryEntry> changeQA(List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory).map(e -> e.getPosition().equals("qa") ? e.withPosition("QA") : e)
+                .getList();
+    }
+
+    private static List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory).map(e -> e.withDuration(e.getDuration()+1)).getList();
+    }
 
     private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, R> function;
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -119,32 +129,39 @@ public class Mapping {
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<>(list).map(function).getList();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new LazyMapHelper<T, R2>(list, function.andThen(f));
         }
-
     }
 
     private static class LazyFlatMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, List<R>> function;
 
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<T, T>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            list.forEach(t -> function.apply(t).forEach(result::add));
+            return result;
         }
 
-        // TODO filter
+        // filter
+        public LazyFlatMapHelper<T, R> filter(Predicate<T> condition) {
+            final List<T> result = new ArrayList<>();
+            list.forEach(t -> { if (condition.test(t)) result.add(t); });
+            return new LazyFlatMapHelper<T, R>(result, function);
+        }
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
@@ -156,7 +173,7 @@ public class Mapping {
 
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+            return r -> Collections.singletonList(f.apply(r));
         }
 
         // TODO *
@@ -193,11 +210,9 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory(changeQA(e.getJobHistory())))
                 .force();
 
         final List<Employee> expectedResult =
@@ -219,6 +234,119 @@ public class Mapping {
                                 new Person("John", "White", 50),
                                 Collections.singletonList(
                                         new JobHistoryEntry(6, "QA", "epam")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    interface LazyCollection<T> {
+        void forEach(Consumer<T> c);
+
+        default List<T> toList() {
+            final ArrayList<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
+        }
+
+        // [T] -> (T -> R) -> [R]
+        default <R> LazyCollection<R> map (Function<T, R> f) {
+            /*final LazyCollection<T> self = this;
+
+            return new LazyCollection<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };*/
+            return c -> forEach(t -> c.accept(f.apply(t)));
+        }
+
+        default LazyCollection<T> filter (Predicate<T> condition) {
+            final LazyCollection<T> self = this;
+
+            return new LazyCollection<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(t -> { if (condition.test(t)) c.accept(t);});
+                }
+            };
+        }
+
+        default <R> LazyCollection<R> flatMap(Function<T, List<R>> f) {
+            final LazyCollection<T> self = this;
+
+            return new LazyCollection<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> {
+                        List<R> result = f.apply(t);
+                        result.forEach(c::accept);
+                    });
+                }
+            };
+
+            // flatten: [[T]] -> [T]
+            // flatten * map: [T] -> (T -> R) -> [[R]}
+        }
+    }
+
+    public static class LazyCollectionImpl<T> implements LazyCollection<T> {
+        private final List<T> list;
+
+        public LazyCollectionImpl(List<T> list) {
+            this.list = list;
+        }
+
+        @Override
+        public void forEach(Consumer<T> c) {
+            list.forEach(c::accept);
+        }
+
+        public static <R> LazyCollectionImpl<R> from(List<R> list) {
+            return new LazyCollectionImpl<R>(list);
+        }
+    }
+
+    @Test
+    public void lazyCollection() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> mappedEmployees = LazyCollectionImpl.from(employees)
+                .filter(e -> e.getPerson().getLastName().equals("Doe"))
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory((changeQA(e.getJobHistory()))))
+                .toList();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
                                 ))
                 );
 
