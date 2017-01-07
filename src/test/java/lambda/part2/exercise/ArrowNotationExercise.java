@@ -40,7 +40,7 @@ public class ArrowNotationExercise {
     // ageOfPersonWithTheLongestFullName: (Person -> String) -> (Person, Person) -> int
     //
     int ageOfPersonWithTheLongestFullName(Person a, Person b){
-        if (getFullName(a).compareTo(getFullName(b)) > 0)
+        if (getFullName(a).length() > getFullName(b).length())
             return a.getAge();
         return b.getAge();
     }
@@ -48,7 +48,7 @@ public class ArrowNotationExercise {
     @Test
     public void getAgeOfPersonWithTheLongestFullName() {
         // Person -> String
-        final Function<Person, String> getFullName = null; // TODO
+        final Function<Person, String> getFullName = this::getFullName;
 
         // (Person, Person) -> Integer
         // TODO use ageOfPersonWithTheLongestFullName(getFullName)
