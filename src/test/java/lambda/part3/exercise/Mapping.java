@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +33,9 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<R> newlist = new ArrayList<R>();
+            list.forEach(e -> newlist.add(f.apply(e)));
+            return new MapHelper<R>(newlist);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +78,24 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                                        .map(j -> j.withDuration(j.getDuration() + 1))
+                                        .collect(Collectors.toList())
+                                )
+                        )
+                        .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                                        .map(j -> {
+                                                    if (j.getPosition() == "qa") {
+                                                        return j.withPosition("QA");
+                                                    }
+                                                    return j;
+                                                }
+                                        )
+                                        .collect(Collectors.toList())
+                                )
+                        )
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -110,8 +124,12 @@ public class Mapping {
 
 
     private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, R> function;
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -119,35 +137,49 @@ public class Mapping {
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<R> newList = new ArrayList<R>();
+            list.forEach(e -> newList.add(function.apply(e)));
+            return newList;
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new LazyMapHelper<>(list, f.compose(function));
         }
 
     }
 
     private static class LazyFlatMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, List<R>> function;
 
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<T, T>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<R> newList = new ArrayList<R>();
+            list.forEach(e -> function.apply(e).forEach(newList::add));
+            return newList;
         }
 
         // TODO filter
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
+
+        public LazyFlatMapHelper<T, R> filter(Predicate<T> predicate) {
+            final List<T> newList = new ArrayList<T>();
+            list.forEach(e -> {
+                if (predicate.test(e))
+                newList.add(e);
+            });
+            return new LazyFlatMapHelper<T, R>(newList, function);
+        }
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
             final Function<R, List<R2>> listFunction = rR2TorListR2(f);
@@ -156,15 +188,15 @@ public class Mapping {
 
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+            return r -> Collections.singletonList(f.apply(r));
         }
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
             throw new UnsupportedOperationException();
         }
-    }
 
+    }
 
 
     @Test
@@ -193,12 +225,24 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
-                .force();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                                        .map(j -> j.withDuration(j.getDuration() + 1))
+                                        .collect(Collectors.toList())
+                                )
+                        )
+                        .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                                        .map(j -> {
+                                                    if (j.getPosition() == "qa") {
+                                                        return j.withPosition("QA");
+                                                    }
+                                                    return j;
+                                                }
+                                        )
+                                        .collect(Collectors.toList())
+                                )
+                        )
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
