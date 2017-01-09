@@ -33,7 +33,11 @@ public class Mapping {
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            for (T t: list) {
+                result.add(f.apply(t));
+            }
+            return new MapHelper<>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -48,6 +52,18 @@ public class Mapping {
 
             return new MapHelper<R>(result);
         }
+    }
+    public List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> history) {
+        return new MapHelper<>(history)
+                .map(h -> h.withDuration(h.getDuration()+1))
+                .getList();
+
+    }
+
+    public List<JobHistoryEntry> qaToQA(List<JobHistoryEntry> history) {
+        return new MapHelper<>(history)
+                .map(e -> e.getPosition().equals("qa") ? e.withPosition("QA") : e)
+                .getList();
     }
 
     @Test
@@ -74,13 +90,15 @@ public class Mapping {
                                 ))
                 );
 
+
+
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
+
+                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory(qaToQA(e.getJobHistory())))
+
                 .getList();
 
         final List<Employee> expectedResult =
@@ -110,8 +128,12 @@ public class Mapping {
 
 
     private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T,R> function;
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -120,22 +142,29 @@ public class Mapping {
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            final List<R> res = new ArrayList<R>();
+            for (T t : list) res.add(function.apply(t));
+            return res;
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            return new LazyMapHelper<T, R2>(list, function.andThen(f));
         }
 
     }
 
     private static class LazyFlatMapHelper<T, R> {
+        final private List<T> list;
+        final private Function<T,List<R>> function;
 
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
+            // TODO
             throw new UnsupportedOperationException();
         }
 
@@ -193,11 +222,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(qaToQA(e.getJobHistory())))
+
                 .force();
 
         final List<Employee> expectedResult =
