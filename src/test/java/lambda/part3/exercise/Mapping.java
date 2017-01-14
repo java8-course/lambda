@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -240,8 +241,19 @@ public class Mapping {
                 .map(TODO) // replace qa with QA
                 * */
                 .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(e -> e.withJobHistory(replaceQa(e.getJobHistory())))
+                .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                        .map(j -> j.withDuration(j.getDuration() + 1))
+                        .collect(Collectors.toList())
+                    )
+                )
+                .map(e -> e.withJobHistory(e.getJobHistory().stream()
+                        .map(j -> {
+                            if (j.getPosition() == "qa") {
+                                return j.withPosition("QA");
+                            }
+                        return j;
+                        }).collect(Collectors.toList()))
+                )
                 .force();
 
         final List<Employee> expectedResult =
