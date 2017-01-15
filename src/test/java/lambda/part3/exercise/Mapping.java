@@ -53,9 +53,8 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> addOneYear (List<JobHistoryEntry> list) {
-        final List<JobHistoryEntry> res = new ArrayList<>();
-        list.forEach(j -> res.add(j.withDuration(j.getDuration() + 1)));
-        return res;
+        MapHelper<JobHistoryEntry> mapHelper = new MapHelper<>(list);
+        return mapHelper.map(j -> j.withDuration(j.getDuration() + 1)).getList();
     }
 
     private List<JobHistoryEntry> mapToQA (List<JobHistoryEntry> list) {
@@ -182,14 +181,15 @@ public class Mapping {
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
-        public LazyFlatMapHelper<T, R> filter(Predicate<T> predicate) {
-            final List<T> result = new ArrayList<T>();
-            list.forEach(t1 -> {
-                if (predicate.test(t1)) {
-                    result.add(t1);
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> predicate) {
+            Function<R, List<R>> func = r -> {
+                final List<R> result = new ArrayList<R>();
+                if (predicate.test(r)) {
+                    result.add(r);
                 }
-            });
-            return new LazyFlatMapHelper<T, R>(result, function);
+                return result;
+            };
+            return flatMap(func);
         }
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
