@@ -182,13 +182,7 @@ public class Mapping {
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
         public LazyFlatMapHelper<T, R> filter(Predicate<R> predicate) {
-            Function<R, List<R>> func = r -> {
-                final List<R> result = new ArrayList<R>();
-                if (predicate.test(r)) {
-                    result.add(r);
-                }
-                return result;
-            };
+            Function<R, List<R>> func = r -> predicate.test(r) ? Collections.singletonList(r) : Collections.emptyList();
             return flatMap(func);
         }
 
