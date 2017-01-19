@@ -207,8 +207,6 @@ public class Mapping {
         }
     }
 
-
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -233,6 +231,8 @@ public class Mapping {
                                 ))
                 );
 
+
+
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
                 /*
@@ -241,19 +241,8 @@ public class Mapping {
                 .map(TODO) // replace qa with QA
                 * */
                 .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(e -> e.withJobHistory(e.getJobHistory().stream()
-                        .map(j -> j.withDuration(j.getDuration() + 1))
-                        .collect(Collectors.toList())
-                    )
-                )
-                .map(e -> e.withJobHistory(e.getJobHistory().stream()
-                        .map(j -> {
-                            if (j.getPosition() == "qa") {
-                                return j.withPosition("QA");
-                            }
-                        return j;
-                        }).collect(Collectors.toList()))
-                )
+                .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                .map(e -> e.withJobHistory(replaceQa(e.getJobHistory())))
                 .force();
 
         final List<Employee> expectedResult =
