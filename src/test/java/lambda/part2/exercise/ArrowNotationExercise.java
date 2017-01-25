@@ -1,6 +1,7 @@
 package lambda.part2.exercise;
 
 import data.Person;
+import lambda.part2.example.ArrowNotation;
 import org.junit.Test;
 
 import java.util.function.BiFunction;
@@ -36,16 +37,19 @@ public class ArrowNotationExercise {
 
     // TODO
     // ageOfPersonWithTheLongestFullName: (Person -> String) -> (Person, Person) -> int
-
+    private static BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName(Function<Person, String> function) {
+        return (p1, p2) -> function.apply(p1).length() > function.apply(p2).length() ? p1.getAge() : p2.getAge();
+    }
 
     @Test
     public void getAgeOfPersonWithTheLongestFullName() {
         // Person -> String
-        final Function<Person, String> getFullName = null; // TODO
+        final Function<Person, String> getFullName = ArrowNotationExercise::getFullName; // TODO
 
         // (Person, Person) -> Integer
         // TODO use ageOfPersonWithTheLongestFullName(getFullName)
-        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName = null;
+        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName =
+                ArrowNotationExercise.ageOfPersonWithTheLongestFullName(getFullName);
 
         assertEquals(
                 Integer.valueOf(1),
