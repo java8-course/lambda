@@ -3,6 +3,7 @@ package lambda.part2.exercise;
 import data.Person;
 import org.junit.Test;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
@@ -19,22 +20,24 @@ public class FunctionCombinationExercise {
         assertEquals(false, validate.test(new Person("a", "", 0)));
     }
 
-    // TODO
-    // negate1: (Person -> boolean) -> (Person -> boolean)
     private Predicate<Person> negate1(Predicate<Person> test) {
-        return p -> {
-            // TODO
-            throw new UnsupportedOperationException();
-        };
+        return (Person p) -> !test.test(p);
     }
 
-    // TODO
     // validateFirstNameAndLastName: (Person -> boolean, Person -> boolean) -> (Person -> boolean)
     private Predicate<Person> validateFirstNameAndLastName(Predicate<Person> t1, Predicate<Person> t2) {
-        return p -> {
-            // TODO
-            throw new UnsupportedOperationException();
-        };
+        return (Person p) -> t1.test(p) && t2.test(p);
+    }
+
+    @Test
+    public void validateFirstNameAndLastName(){
+        final String namePattern = "^\\p{L}+$";
+        Predicate<Person> validateFirstNameAndLastName =  (Person p) -> p.getFirstName().matches(namePattern)&&p.getLastName().matches(namePattern);
+
+        assertEquals(true, validateFirstNameAndLastName.test(new Person("a", "b", 0)));
+        assertEquals(false, validateFirstNameAndLastName.test(new Person("", "b", 0)));
+        assertEquals(false, validateFirstNameAndLastName.test(new Person("a", "", 0)));
+        assertEquals(false, validateFirstNameAndLastName.test(new Person("a", "%", 0)));
     }
 
     @Test
@@ -52,18 +55,14 @@ public class FunctionCombinationExercise {
         assertEquals(false, validate.test(new Person("a", "", 0)));
     }
 
-    // TODO
     // negate: (T -> boolean) -> (T -> boolean)
     private <T> Predicate<T> negate(Predicate<T> test) {
-        // TODO
-        throw new UnsupportedOperationException();
+        return (T o) -> !test.test(o);
     }
 
-    // TODO
     // and: (T -> boolean, T -> boolean) -> (T -> boolean)
     private <T> Predicate<T> and(Predicate<T> t1, Predicate<T> t2) {
-        // TODO
-        throw new UnsupportedOperationException();
+        return (T o) -> t1.test(o)&&t2.test(o);
     }
 
     @Test
@@ -71,10 +70,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = null; // TODO use negate
-        final Predicate<Person> validateLastName = null; // TODO use negate
+        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName);
+        final Predicate<Person> validateLastName = negate(hasEmptyLastName);
 
-        final Predicate<Person> validate = null; // TODO use and
+        final Predicate<Person> validate = and(validateFirstName,validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
@@ -86,10 +85,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = null; // TODO use Predicate::negate
-        final Predicate<Person> validateLastName = null; // TODO use Predicate::negate
+        final Predicate<Person> validateFirstName = hasEmptyFirstName.negate();
+        final Predicate<Person> validateLastName = hasEmptyLastName.negate();
 
-        final Predicate<Person> validate = null; // TODO use Predicate::and
+        final Predicate<Person> validate = validateFirstName.and(validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
