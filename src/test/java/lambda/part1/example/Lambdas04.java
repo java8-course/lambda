@@ -20,7 +20,7 @@ public class Lambdas04 {
             }
         });
 
-        //person = new Person("a", "a");
+        //person = new Person("a", "a", 44);
     }
 
     @Test
@@ -38,6 +38,10 @@ public class Lambdas04 {
     }
 
     private Person _person = null;
+
+    public Person get_person() {
+        return _person;
+    }
 
     @Test
     public void closure_this_lambda() {
@@ -65,7 +69,7 @@ public class Lambdas04 {
 
         //final Person person = _person;
         final Runnable r1 = runLater(() -> _person.print());
-        final Runnable r2 = runLater(_person::print);
+        final Runnable r2 = runLater(get_person()::print);
 
         _person = new Person("a", "a", 1);
 

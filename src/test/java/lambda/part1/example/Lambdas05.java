@@ -4,6 +4,7 @@ import data.Person;
 import org.junit.Test;
 
 import java.io.Serializable;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class Lambdas05 {
@@ -16,6 +17,11 @@ public class Lambdas05 {
     @Test
     public void printField() {
         printResult(person, Person::getLastName);
+        printResult(person, Person::getLastName2);
+
+        BiFunction<Person, String, Person> changeFirstName = Person::withFirstName;
+
+        printResult(changeFirstName.apply(person, "newName"), Person::getFirstName);
     }
 
 
@@ -77,5 +83,6 @@ public class Lambdas05 {
     @Test
     public void factory() {
         withFactory(Person::new);
+        withFactory((firstName, lastName, age) -> new Person(firstName + "!", lastName + "!", age + 633));
     }
 }

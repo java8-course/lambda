@@ -1,5 +1,6 @@
 package lambda.part2.example;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import data.Person;
 import org.junit.Test;
 
@@ -61,10 +62,29 @@ public class ArrowNotation {
         };
     }
 
+    // (Person -> String) -> Person -> String -> boolean
+    private static Function<Person, Predicate<String>> propertyChecker2(Function<Person, String> getProperty) {
+        return p -> expectedPropValue -> getProperty.apply(p).equals(expectedPropValue);
+    }
+
+    @Test
+    public void checkProperty2() {
+        final Function<Person, Predicate<String>> lastNameChecker = propertyChecker2(Person::getLastName);
+        final Function<Person, Predicate<String>> ageChecker = propertyChecker2((person1) -> person1.getAge() + "");
+
+        final Person person = new Person("a", "b", 33);
+        assertEquals(Boolean.TRUE, lastNameChecker.apply(person).test("b"));
+        assertEquals(Boolean.TRUE, ageChecker.apply(person).test("33"));
+    }
+
     @Test
     public void checkProperty() {
         // String -> boolean
-        final Predicate<String> checkFirstName = propertyChecker(new Person("a", "b", 0), Person::getFirstName);
+        Person person = new Person("a", "b", 0);
+        // Person -> String
+        Function<Person, String> getFirstName = Person::getFirstName;
+        // String -> boolean
+        final Predicate<String> checkFirstName = propertyChecker(person, getFirstName);
 
         assertEquals(Boolean.TRUE, checkFirstName.test("a"));
     }
