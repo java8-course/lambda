@@ -1,0 +1,32 @@
+apply plugin: 'java'
+
+group = 'com.epam.course.java8'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url 'https://jitpack.io' }
+}
+
+configurations {
+    testCompile.extendsFrom compileOnly
+}
+
+dependencies {
+    compile 'com.google.guava:guava:+',
+            'org.apache.commons:commons-lang3:+',
+            'ch.qos.logback:logback-classic:+',
+            'io.javaslang:javaslang:+',
+            'com.github.Vyacheslav-Lapin:Hegel:master-SNAPSHOT' //https://github.com/Vyacheslav-Lapin/Hegel.git
+
+    compileOnly 'org.projectlombok:lombok:+',
+            'edu.washington.cs.types.checker:checker-framework:+'
+
+    testCompile 'org.junit.jupiter:junit-jupiter-api:+',
+            'org.hamcrest:java-hamcrest:+'
+}

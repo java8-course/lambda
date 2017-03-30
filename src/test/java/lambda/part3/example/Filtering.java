@@ -3,7 +3,8 @@ package lambda.part3.example;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,11 +12,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Filtering {
+class Filtering {
     @Test
-    public void filtering0() {
+    void filtering0() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(
@@ -53,15 +54,15 @@ public class Filtering {
         }
     }
 
-
-    public static class FilterUtil<T> {
+    @Nested
+    static class FilterUtil<T> {
         private final List<T> list;
 
-        public FilterUtil(List<T> list) {
+        FilterUtil(List<T> list) {
             this.list = list;
         }
 
-        public List<T> getList() {
+        List<T> getList() {
             return list;
         }
 
@@ -94,7 +95,7 @@ public class Filtering {
     }
 
     @Test
-    public void filtering() {
+    void filtering() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(
@@ -134,20 +135,21 @@ public class Filtering {
         assertEquals(filteredList.get(0).getPerson(), new Person("John", "Galt", 30));
     }
 
-    public static class LazyFilterUtil<T> {
+    @Nested
+    static class LazyFilterUtil<T> {
         private final List<T> list;
         private final Predicate<T> condition;
 
-        public LazyFilterUtil(List<T> list, Predicate<T> condition) {
+        LazyFilterUtil(List<T> list, Predicate<T> condition) {
             this.list = list;
             this.condition = condition;
         }
 
-        public LazyFilterUtil(List<T> list) {
+        LazyFilterUtil(List<T> list) {
             this(list, null);
         }
 
-        public List<T> force() {
+        List<T> force() {
             if (condition == null) {
                 return list;
             }
@@ -179,7 +181,7 @@ public class Filtering {
 
 
     @Test
-    public void lazy_filtering() {
+    void lazy_filtering() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(

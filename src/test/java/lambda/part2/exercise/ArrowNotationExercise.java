@@ -1,18 +1,17 @@
 package lambda.part2.exercise;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ArrowNotationExercise {
+class ArrowNotationExercise {
 
     @Test
-    public void getAge() {
+    void getAge() {
         // Person -> Integer
         final Function<Person, Integer> getAge = null; // TODO
 
@@ -20,7 +19,7 @@ public class ArrowNotationExercise {
     }
 
     @Test
-    public void compareAges() {
+    void compareAges() {
         // TODO use BiPredicate
         // compareAges: (Person, Person) -> boolean
 
@@ -36,7 +35,7 @@ public class ArrowNotationExercise {
     //
 
     @Test
-    public void getAgeOfPersonWithTheLongestFullName() {
+    void getAgeOfPersonWithTheLongestFullName() {
         // Person -> String
         final Function<Person, String> getFullName = null; // TODO
 

@@ -1,16 +1,16 @@
 package lambda.part2.example;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FunctionCombination {
+class FunctionCombination {
 
     @Test
-    public void personToInt0() {
+    void personToInt0() {
         // Person -> Integer
         final Function<Person, Integer> lastNameLength = p -> p.getLastName().length();
 
@@ -29,7 +29,7 @@ public class FunctionCombination {
     }
 
     @Test
-    public void personToInt1() {
+    void personToInt1() {
         final Function<Person, String> getLastName = Person::getLastName;
         final Function<String, Integer> getLength = String::length;
         final Function<Person, Integer> lastNameLength = personStringPropertyToInt(getLastName, getLength);
@@ -43,7 +43,7 @@ public class FunctionCombination {
     }
 
     @Test
-    public void personToInt2() {
+    void personToInt2() {
         final Function<Person, String> getLastName = Person::getLastName;
         final Function<String, Integer> getLength = String::length;
         final Function<Person, Integer> lastNameLength = andThen(getLastName, getLength);
@@ -52,7 +52,7 @@ public class FunctionCombination {
     }
 
     @Test
-    public void personToInt3() {
+    void personToInt3() {
         final Function<Person, String> getLastName = Person::getLastName;
         final Function<String, Integer> getLength = String::length;
         final Function<Person, Integer> lastNameLength = getLastName.andThen(getLength);

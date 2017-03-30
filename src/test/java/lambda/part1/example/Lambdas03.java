@@ -1,10 +1,10 @@
 package lambda.part1.example;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Lambdas03 {
+class Lambdas03 {
 
     // SAM interface
     //
@@ -19,7 +19,7 @@ public class Lambdas03 {
     }
 
     @Test
-    public void generic0() {
+    void generic0() {
         final GenericSum<Integer> sum =
                 new GenericSum<Integer>() {
                     @Override
@@ -33,7 +33,7 @@ public class Lambdas03 {
     }
 
     @Test
-    public void generic1() {
+    void generic1() {
         final GenericSum<Integer> sum =
                 (Integer i1, Integer i2) -> {
                     System.out.print("before sum");
@@ -44,7 +44,7 @@ public class Lambdas03 {
     }
 
     @Test
-    public void generic2() {
+    void generic2() {
         final GenericSum<Integer> sum = (i1, i2) -> i1 + i2;
 
         assertEquals(sum.twice(1), Integer.valueOf(2));
@@ -55,7 +55,7 @@ public class Lambdas03 {
     }
 
     @Test
-    public void strSum() {
+    void strSum() {
         final GenericSum<String> sum = Lambdas03::stringSum;
 
         assertEquals(sum.sum("a", "b"), "ab");
@@ -68,7 +68,7 @@ public class Lambdas03 {
     }
 
     @Test
-    public void strSum2() {
+    void strSum2() {
         final GenericSum<String> sum = this::stringSumWithDelimeter;
 
         assertEquals(sum.sum("a", "b"), "a-b");

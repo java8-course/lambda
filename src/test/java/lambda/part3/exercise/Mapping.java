@@ -3,20 +3,17 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Mapping {
+class Mapping {
 
     private static class MapHelper<T> {
         private final List<T> list;
@@ -51,7 +48,7 @@ public class Mapping {
     }
 
     @Test
-    public void mapping() {
+    void mapping() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(
@@ -111,14 +108,14 @@ public class Mapping {
 
     private static class LazyMapHelper<T, R> {
 
-        public LazyMapHelper(List<T> list, Function<T, R> function) {
+        LazyMapHelper(List<T> list, Function<T, R> function) {
         }
 
-        public static <T> LazyMapHelper<T, T> from(List<T> list) {
+        static <T> LazyMapHelper<T, T> from(List<T> list) {
             return new LazyMapHelper<>(list, Function.identity());
         }
 
-        public List<R> force() {
+        List<R> force() {
             // TODO
             throw new UnsupportedOperationException();
         }
@@ -160,7 +157,7 @@ public class Mapping {
         }
 
         // TODO *
-        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
+        <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
             throw new UnsupportedOperationException();
         }
     }
@@ -168,7 +165,7 @@ public class Mapping {
 
 
     @Test
-    public void lazy_mapping() {
+    void lazy_mapping() {
         final List<Employee> employees =
                 Arrays.asList(
                         new Employee(

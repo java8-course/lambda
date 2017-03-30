@@ -11,7 +11,7 @@ public class FilterMap {
         private final Predicate<T> predicate;
         private final Function<T, R> function;
 
-        public Container(Predicate<T> predicate) {
+        Container(Predicate<T> predicate) {
             this.predicate = predicate;
             this.function = null;
         }
@@ -34,7 +34,7 @@ public class FilterMap {
         private final List<Container<Object, Object>> actions;
         private final List<T> list;
 
-        public LazyCollectionHelper(List<T> list, List<Container<Object, Object>> actions) {
+        LazyCollectionHelper(List<T> list, List<Container<Object, Object>> actions) {
             this.actions = actions;
             this.list = list;
         }

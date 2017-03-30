@@ -1,24 +1,22 @@
 package lambda.part1.example;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Lambdas02 {
+class Lambdas02 {
 
     @Test
-    public void sortPersons() {
+    void sortPersons() {
         Person[] persons = {
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 1", "lastName 2", 40),
@@ -36,7 +34,7 @@ public class Lambdas02 {
     }
 
     @Test
-    public void findFirstByName_guava() {
+    void findFirstByName_guava() {
         List<Person> persons = ImmutableList.of(
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 1", "lastName 2", 40),
@@ -53,7 +51,7 @@ public class Lambdas02 {
     }
 
     @Test
-    public void lastNamesSet() {
+    void lastNamesSet() {
         List<Person> persons = ImmutableList.of(
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 1", "lastName 2", 40),

@@ -2,19 +2,17 @@ package lambda.part1.exercise;
 
 import com.google.common.collect.ImmutableList;
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Lambdas01Exercise {
+class Lambdas01Exercise {
 
     @Test
-    public void sortPersonsByAge() {
+    void sortPersonsByAge() {
         Person[] persons = {
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 1", "lastName 2", 40),
@@ -31,7 +29,7 @@ public class Lambdas01Exercise {
     }
 
     @Test
-    public void findFirstWithAge30() {
+    void findFirstWithAge30() {
         List<Person> persons = ImmutableList.of(
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 1", "lastName 2", 30),

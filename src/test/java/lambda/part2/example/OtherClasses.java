@@ -1,20 +1,20 @@
 package lambda.part2.example;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class OtherClasses {
 
     @Test
     // Supplier: () -> T
     // Arity 0
-    public void suppliers() {
+    void suppliers() {
         final Supplier<String> strSupplier = () -> new String("a");
 
         assertEquals("a", strSupplier.get());
@@ -36,7 +36,7 @@ public class OtherClasses {
     @Test
     // Consumer: T -> void
     // Arity 1
-    public void consumers() {
+    void consumers() {
         final Consumer<String> stringConsumer = System.out::println;
 
         stringConsumer.accept("Some string");
@@ -49,7 +49,7 @@ public class OtherClasses {
     @Test
     // UnaryOperator: T -> T
     // Arity 1
-    public void unaryOperator() {
+    void unaryOperator() {
         final UnaryOperator<String> reverse = s -> new StringBuilder(s).reverse().toString();
 
         assertEquals("abc", reverse.apply("cba"));
@@ -65,7 +65,7 @@ public class OtherClasses {
     @Test
     // Function: T -> R
     // Arity 1
-    public void functions() {
+    void functions() {
         final Function<Person, String> getFirstName = Person::getFirstName;
         assertEquals("a", getFirstName.apply(new Person("a", "b", 33)));
 
@@ -82,7 +82,7 @@ public class OtherClasses {
     @Test
     // Predicate: T -> boolean
     // Arity 1
-    public void predicates() {
+    void predicates() {
         final Predicate<String> isEmpty = String::isEmpty;
         assertEquals(true, isEmpty.test(""));
 
@@ -96,7 +96,7 @@ public class OtherClasses {
     @Test
     // BinaryOperator: (T, T) -> T
     // Arity 2
-    public void binaryOperators() {
+    void binaryOperators() {
         final BinaryOperator<String> concat = String::concat;
         assertEquals("ab", concat.apply("a", "b"));
 
@@ -110,7 +110,7 @@ public class OtherClasses {
     @Test
     // BiFunction: (A, B) -> R
     // Arity 2
-    public void biFunction() {
+    void biFunction() {
         final BiFunction<Person, String, Person> changeFirstName = Person::withFirstName;
         assertEquals(new Person("c", "b", 0), changeFirstName.apply(new Person("a", "b", 0), "c"));
 
@@ -126,14 +126,14 @@ public class OtherClasses {
     @Test
     // BiPredicate: (A, B) -> boolean
     // Arity 2
-    public void biPredicate() {
+    void biPredicate() {
         final BiPredicate<String, Person> checkFirstName = (s, p) -> s.equals(p.getFirstName());
     }
 
     @Test
     // BiConsumer: (A, B) -> void
     // Arity 2
-    public void biConsumers() {
+    void biConsumers() {
         final BiConsumer<Person, String> biConsumer = null;
 
         final ObjIntConsumer<String> checkLength = null;
@@ -182,14 +182,4 @@ public class OtherClasses {
         assertEquals(new Person("John", "Doe", 22), johnDoeWithoutAge.apply(22));
         assertEquals(new Person("John", "Doe", 33), johnDoeWithoutAge.apply(33));
     }
-
-
-
-
-
-
-
-
-
-
 }
