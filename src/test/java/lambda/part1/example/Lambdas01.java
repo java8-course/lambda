@@ -7,6 +7,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import data.Person;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,8 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // JSR-335 Lambda Expressions for the Java Programming Language
 
 // https://github.com/Vyacheslav-Lapin/lambda
-
-class Lambdas01 {
+//@ExtendWith()
+class Lambdas01{
 
     @Test
     void sortPersons() {
