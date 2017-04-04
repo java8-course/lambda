@@ -1,13 +1,14 @@
 package lambda.part1.example;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class Lambdas05 {
+class Lambdas05 {
     private <T> void printResult(T t, Function<T, String> f) {
         System.out.println(f.apply(t));
     }
@@ -15,7 +16,7 @@ public class Lambdas05 {
     private final Person person = new Person("John", "Galt", 33);
 
     @Test
-    public void printField() {
+    void printField() {
         printResult(person, Person::getLastName);
         printResult(person, Person::getLastName2);
 
@@ -24,21 +25,21 @@ public class Lambdas05 {
         printResult(changeFirstName.apply(person, "newName"), Person::getFirstName);
     }
 
-
+    @Nested
     private static class PersonHelper {
-        public static String stringRepresentation(Person person) {
+        static String stringRepresentation(Person person) {
             return person.toString();
         }
     }
 
 
     @Test
-    public void printStringRepresentation() {
+    void printStringRepresentation() {
         printResult(person, PersonHelper::stringRepresentation);
     }
 
     @Test
-    public void exception() {
+    void exception() {
         Runnable r = () -> {
             //Thread.sleep(100);
             person.print();
@@ -68,7 +69,7 @@ public class Lambdas05 {
     }
 
     @Test
-    public void callConflict() {
+    void callConflict() {
         conflict((DoSmth & Serializable) this::printAndReturn);
     }
 
@@ -81,7 +82,7 @@ public class Lambdas05 {
     }
 
     @Test
-    public void factory() {
+    void factory() {
         withFactory(Person::new);
         withFactory((firstName, lastName, age) -> new Person(firstName + "!", lastName + "!", age + 633));
     }

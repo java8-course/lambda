@@ -1,16 +1,16 @@
 package lambda.part1.example;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class Lambdas04 {
+class Lambdas04 {
 
     private void run(Runnable r) {
         r.run();
     }
 
     @Test
-    public void closure() {
+    void closure() {
         Person person = new Person("John", "Galt", 33);
 
         run(new Runnable() {
@@ -24,7 +24,7 @@ public class Lambdas04 {
     }
 
     @Test
-    public void closure_lambda() {
+    void closure_lambda() {
         Person person = new Person("John", "Galt", 33);
 
         // statement lambda
@@ -39,12 +39,12 @@ public class Lambdas04 {
 
     private Person _person = null;
 
-    public Person get_person() {
+    private Person get_person() {
         return _person;
     }
 
     @Test
-    public void closure_this_lambda() {
+    void closure_this_lambda() {
         _person = new Person("John", "Galt", 33);
 
         run(() -> /*this.*/_person.print());
@@ -64,7 +64,7 @@ public class Lambdas04 {
 
 
     @Test
-    public void closure_this_lambda2() {
+    void closure_this_lambda2() {
         _person = new Person("John", "Galt", 33);
 
         //final Person person = _person;

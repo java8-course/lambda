@@ -1,16 +1,16 @@
 package lambda.part2.exercise;
 
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class FunctionCombinationExercise {
+class FunctionCombinationExercise {
 
     @Test
-    public void personHasNotEmptyLastNameAndFirstName0() {
+    void personHasNotEmptyLastNameAndFirstName0() {
         // Person -> boolean
         final Predicate<Person> validate = p -> !p.getFirstName().isEmpty() && !p.getLastName().isEmpty();
 
@@ -38,7 +38,7 @@ public class FunctionCombinationExercise {
     }
 
     @Test
-    public void personHasNotEmptyLastNameAndFirstName1() {
+    void personHasNotEmptyLastNameAndFirstName1() {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
@@ -67,7 +67,7 @@ public class FunctionCombinationExercise {
     }
 
     @Test
-    public void personHasNotEmptyLastNameAndFirstName2() {
+    void personHasNotEmptyLastNameAndFirstName2() {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
@@ -82,7 +82,7 @@ public class FunctionCombinationExercise {
     }
 
     @Test
-    public void personHasNotEmptyLastNameAndFirstName3() {
+    void personHasNotEmptyLastNameAndFirstName3() {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 

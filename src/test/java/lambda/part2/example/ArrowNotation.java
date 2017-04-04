@@ -1,16 +1,15 @@
 package lambda.part2.example;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import data.Person;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ArrowNotation {
+class ArrowNotation {
 
     // String -> int
     private static int strLength(String s) {
@@ -18,7 +17,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void stringToInt() {
+    void stringToInt() {
         // String -> Integer
         final Function<String, Integer> strLength = ArrowNotation::strLength;
 
@@ -26,7 +25,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void personToString() {
+    void personToString() {
         // Person -> String
         final Function<Person, String> lastName = Person::getLastName;
 
@@ -34,7 +33,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void personToInt() {
+    void personToInt() {
         // Person -> Integer
         final Function<Person, Integer> lastNameLength = p -> p.getLastName().length();
 
@@ -47,7 +46,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void checkLastName() {
+    void checkLastName() {
         // (Person, String) -> Boolean
         final BiFunction<Person, String, Boolean> sameLastName = ArrowNotation::sameLastName;
 
@@ -68,7 +67,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void checkProperty2() {
+    void checkProperty2() {
         final Function<Person, Predicate<String>> lastNameChecker = propertyChecker2(Person::getLastName);
         final Function<Person, Predicate<String>> ageChecker = propertyChecker2((person1) -> person1.getAge() + "");
 
@@ -78,7 +77,7 @@ public class ArrowNotation {
     }
 
     @Test
-    public void checkProperty() {
+    void checkProperty() {
         // String -> boolean
         Person person = new Person("a", "b", 0);
         // Person -> String

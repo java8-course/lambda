@@ -1,12 +1,12 @@
 package lambda.part1.exercise;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.StringJoiner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class Lambdas03Exercise {
+class Lambdas03Exercise {
 
     private interface GenericProduct<T> {
         T prod(T a, int i);
@@ -17,21 +17,21 @@ public class Lambdas03Exercise {
     }
 
     @Test
-    public void generic0() {
+    void generic0() {
         final GenericProduct<Integer> prod = null; // Use anonymous class
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
 
     @Test
-    public void generic1() {
+    void generic1() {
         final GenericProduct<Integer> prod = null; // Use statement lambda
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
 
     @Test
-    public void generic2() {
+    void generic2() {
         final GenericProduct<Integer> prod = null; // Use expression lambda
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
@@ -46,7 +46,7 @@ public class Lambdas03Exercise {
     }
 
     @Test
-    public void strSum() {
+    void strSum() {
         final GenericProduct<String> prod = null; // use stringProd;
 
         assertEquals(prod.prod("a", 2), "aa");
@@ -63,11 +63,9 @@ public class Lambdas03Exercise {
     }
 
     @Test
-    public void strSum2() {
+    void strSum2() {
         final GenericProduct<String> prod = null; // use stringSumWithDelimeter;
 
         assertEquals(prod.prod("a", 3), "a-a-a");
     }
-
-
 }

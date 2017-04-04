@@ -1,5 +1,6 @@
 package data;
 
+import lombok.Getter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Employee {
+    @Getter
     private final Person person;
     private final List<JobHistoryEntry> jobHistory;
 
@@ -22,10 +24,6 @@ public class Employee {
 
     public Employee withJobHistory(List<JobHistoryEntry> h) {
         return new Employee(person, h);
-    }
-
-    public Person getPerson() {
-        return person;
     }
 
     public List<JobHistoryEntry> getJobHistory() {
