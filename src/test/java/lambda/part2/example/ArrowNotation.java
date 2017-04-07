@@ -1,6 +1,5 @@
 package lambda.part2.example;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import data.Person;
 import org.junit.Test;
 
