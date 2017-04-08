@@ -32,7 +32,9 @@ public class Lambdas03Exercise {
     @Test
     public void generic1() {
         final GenericProduct<Integer> prod = //null; // Use statement lambda
-                (o1, o2) -> o1 * o2;
+                (o1, o2) -> {
+                    return o1 * o2;
+                };
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
@@ -40,9 +42,7 @@ public class Lambdas03Exercise {
     @Test
     public void generic2() {
         final GenericProduct<Integer> prod = //null; // Use expression lambda
-                (o1, o2) -> {
-                    return o1 * o2;
-                };
+                (o1, o2) -> o1 * o2;
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
