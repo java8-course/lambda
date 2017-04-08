@@ -24,12 +24,9 @@ public class Lambdas02Exercise {
         };
 
         // TODO use Arrays.sort
-        Arrays.sort(persons, new Comparator<Person>() {
-            @Override
-            public int compare(Person o1, Person o2) {
-                return Integer.compare(o1.getAge(), o2.getAge());
-            }
-        });
+        Arrays.sort(persons, (p1, p2) -> Integer.compare(p1.getAge(), p2.getAge()));
+        //Or
+        //Arrays.sort(persons, Comparator.comparingInt(Person::getAge));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
@@ -50,14 +47,10 @@ public class Lambdas02Exercise {
 
         // TODO use FluentIterable
         Optional<Person> personOptional = FluentIterable.from(persons)
-                .firstMatch(new Predicate<Person>() {
-                    @Override
-                    public boolean apply(Person person) {
-                        return person.getAge() == 30;
-                    }
-                });
+                .firstMatch(p -> p.getAge()==30);
 
-        if (personOptional.isPresent()) person=personOptional.get();
+        if (personOptional.isPresent())
+            person = personOptional.get();
 
         assertEquals(person, new Person("name 1", "lastName 2", 30));
     }
