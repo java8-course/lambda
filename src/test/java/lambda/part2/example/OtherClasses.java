@@ -75,7 +75,7 @@ public class OtherClasses {
         final IntFunction<Person> withAge = i -> new Person("a", "b", i);
         assertEquals(new Person("a", "b", 666), withAge.apply(666));
 
-        final DoubleToLongFunction doubleToLong = d -> (long)d;
+        final DoubleToLongFunction doubleToLong = d -> (long) d;
         assertEquals(666, doubleToLong.applyAsLong(666.66));
     }
 
@@ -182,14 +182,5 @@ public class OtherClasses {
         assertEquals(new Person("John", "Doe", 22), johnDoeWithoutAge.apply(22));
         assertEquals(new Person("John", "Doe", 33), johnDoeWithoutAge.apply(33));
     }
-
-
-
-
-
-
-
-
-
 
 }
