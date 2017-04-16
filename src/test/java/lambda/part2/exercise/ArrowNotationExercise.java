@@ -40,7 +40,7 @@ public class ArrowNotationExercise {
         return (p1, p2) -> {
             final String p1FullName = getFullName.apply(p1);
             final String p2FullName = getFullName.apply(p2);
-            return Integer.compare(p2FullName.length(), p1FullName.length());
+            return Integer.compare(p2FullName.length(), p1FullName.length()) > 0 ? p2.getAge() : p1.getAge();
         };
     }
 
