@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +33,10 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<>();
+            list.forEach((T t) ->
+                    result.add(f.apply(t)));
+            return new MapHelper<>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -41,13 +44,21 @@ public class Mapping {
         // map: [T, T, T], T -> [R] => [[], [R1, R2], [R3, R4, R5]]
         // flatMap: [T, T, T], T -> [R] => [R1, R2, R3, R4, R5]
         public <R> MapHelper<R> flatMap(Function<T, List<R>> f) {
-            final List<R> result = new ArrayList<R>();
+            final List<R> result = new ArrayList<>();
             list.forEach((T t) ->
                     f.apply(t).forEach(result::add)
             );
 
             return new MapHelper<R>(result);
         }
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> list) {
+
+        return new MapHelper<>(list)
+                .map(e -> e.withDuration(e.getDuration() + 1))
+                .getList();
+
     }
 
     @Test
@@ -76,11 +87,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+
+                        .map(e -> e.withJobHistory(upperCaseQA(e.getJobHistory())))
                 .getList();
 
         final List<Employee> expectedResult =
@@ -106,6 +116,14 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private List<JobHistoryEntry> upperCaseQA(List<JobHistoryEntry> jobHistory) {
+
+        return new MapHelper<>(jobHistory)
+                .map(e -> e.withPosition(e.getPosition().equals("qa") ? "QA" : e.getPosition()))
+                .getList();
+
     }
 
 

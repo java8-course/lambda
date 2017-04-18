@@ -49,14 +49,13 @@ public class FilterMap {
             return new LazyCollectionHelper<>(list, newActions);
         }
 
-        public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
-            // TODO
-            throw new UnsupportedOperationException();
-        }
-
-        public List<T> force() {
-            // TODO
-            throw new UnsupportedOperationException();
-        }
+//        public <R> LazyCollectionHelper<R> map(Function<T, R> function) {
+//            // TODO
+//        }
+//
+//        public List<T> force() {
+//            // TODO
+//            throw new UnsupportedOperationException();
+//        }
     }
 }
