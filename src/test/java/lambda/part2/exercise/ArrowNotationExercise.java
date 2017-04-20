@@ -13,36 +13,27 @@ public class ArrowNotationExercise {
 
     @Test
     public void getAge() {
-        // Person -> Integer
-        final Function<Person, Integer> getAge = null; // TODO
+        final Function<Person, Integer> getAge = t -> t.getAge();
 
         assertEquals(Integer.valueOf(33), getAge.apply(new Person("", "", 33)));
     }
 
     @Test
     public void compareAges() {
-        // TODO use BiPredicate
-        // compareAges: (Person, Person) -> boolean
+        final BiPredicate<Person, Person> compareAges = (t1, t2) -> t1.getAge() == t2.getAge();
 
-        throw new UnsupportedOperationException("Not implemented");
-        //assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
+        assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
     }
-
-    // TODO
-    // getFullName: Person -> String
-
-    // TODO
-    // ageOfPersonWithTheLongestFullName: (Person -> String) -> (Person, Person) -> int
-    //
 
     @Test
     public void getAgeOfPersonWithTheLongestFullName() {
-        // Person -> String
-        final Function<Person, String> getFullName = null; // TODO
-
-        // (Person, Person) -> Integer
-        // TODO use ageOfPersonWithTheLongestFullName(getFullName)
-        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName = null;
+        final Function<Person, String> getFullName = t -> t.getFirstName() + " " + t.getLastName();
+        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName =
+                (t1, t2) -> {
+                    if (getFullName.apply(t1).length() > getFullName.apply(t2).length())
+                        return t1.getAge();
+                    else return t2.getAge();
+                };
 
         assertEquals(
                 Integer.valueOf(1),

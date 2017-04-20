@@ -9,10 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +29,10 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            list.forEach(t ->
+                    result.add(f.apply(t)));
+            return new MapHelper<>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +75,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John"))) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory()))) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changeToQA(e.getJobHistory()))) // replace qa with QA
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -105,7 +102,23 @@ public class Mapping {
                                 ))
                 );
 
-        assertEquals(mappedEmployees, expectedResult);
+        assertEquals(expectedResult, mappedEmployees);
+
+    }
+
+    private List<JobHistoryEntry> changeToQA(List<JobHistoryEntry> jobHistory) {
+        final MapHelper<JobHistoryEntry> jobHistoryEntryMapHelper = new MapHelper<>(jobHistory);
+        return jobHistoryEntryMapHelper.map(t -> {
+            if (t.getPosition().equals("qa"))
+                return t.withPosition("QA");
+            else return t;
+        }).getList();
+
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        final MapHelper<JobHistoryEntry> jobHistoryEntryMapHelper = new MapHelper<>(jobHistory);
+        return jobHistoryEntryMapHelper.map(t -> t.withDuration(t.getDuration() + 1)).getList();
     }
 
 
@@ -166,7 +179,6 @@ public class Mapping {
     }
 
 
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -198,7 +210,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
