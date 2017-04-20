@@ -107,19 +107,18 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> changeToQA(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(t -> {
+        final MapHelper<JobHistoryEntry> jobHistoryEntryMapHelper = new MapHelper<>(jobHistory);
+        return jobHistoryEntryMapHelper.map(t -> {
             if (t.getPosition().equals("qa"))
-                result.add(t.withPosition("QA"));
-            else result.add(t);
-        });
-        return result;
+                return t.withPosition("QA");
+            else return t;
+        }).getList();
+
     }
 
     private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(t -> result.add(t.withDuration(t.getDuration() + 1)));
-        return result;
+        final MapHelper<JobHistoryEntry> jobHistoryEntryMapHelper = new MapHelper<>(jobHistory);
+        return jobHistoryEntryMapHelper.map(t -> t.withDuration(t.getDuration() + 1)).getList();
     }
 
 
