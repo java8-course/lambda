@@ -13,7 +13,6 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
-//lazy collection
 public class Mapping {
 
     private static class MapHelper<T> {
