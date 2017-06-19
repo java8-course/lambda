@@ -54,7 +54,7 @@ public class Lambdas03Exercise {
 
     @Test
     public void strSum() {
-        final GenericProduct<String> prod = null; // use stringProd;
+        final GenericProduct<String> prod = Lambdas03Exercise::stringProd; // use stringProd;
 
         assertEquals(prod.prod("a", 2), "aa");
     }
