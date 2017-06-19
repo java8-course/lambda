@@ -18,22 +18,31 @@ public class Lambdas03Exercise {
 
     @Test
     public void generic0() {
-        final GenericProduct<Integer> prod = null; // Use anonymous class
+        final GenericProduct<Integer> prod = new GenericProduct<Integer>() {
+            @Override
+            public Integer prod(Integer i1, int i2) {
+                System.out.print("before prod");
+                return i1 * i2;
+            }
+        };
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
 
     @Test
     public void generic1() {
-        final GenericProduct<Integer> prod = null; // Use statement lambda
+        final GenericProduct<Integer> prod = (Integer i1, int i2) -> {
+                System.out.print("before prod");
+                return i1 * i2;
+        }; // Use statement lambda
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
 
     @Test
     public void generic2() {
-        final GenericProduct<Integer> prod = null; // Use expression lambda
-
+        final GenericProduct<Integer> prod = (i1, i2) -> i1 * i2;
+         // Use expression lambda
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
 
@@ -47,7 +56,7 @@ public class Lambdas03Exercise {
 
     @Test
     public void strSum() {
-        final GenericProduct<String> prod = null; // use stringProd;
+        final GenericProduct<String> prod = Lambdas03Exercise::stringProd; // use stringProd;
 
         assertEquals(prod.prod("a", 2), "aa");
     }
@@ -64,7 +73,7 @@ public class Lambdas03Exercise {
 
     @Test
     public void strSum2() {
-        final GenericProduct<String> prod = null; // use stringSumWithDelimeter;
+        final GenericProduct<String> prod = this::stringSumWithDelimeter; // use stringSumWithDelimeter;
 
         assertEquals(prod.prod("a", 3), "a-a-a");
     }
