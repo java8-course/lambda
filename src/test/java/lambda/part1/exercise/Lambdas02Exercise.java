@@ -23,16 +23,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
-        Arrays.sort(persons, ( o1,  o2) -> {
-                if(o1.getAge() < o2.getAge())
-                    return -1;
-                else if(o1.getAge() > o2.getAge())
-                    return 1;
-                else
-                    return 0;
-            }
-        );
+        Arrays.sort(persons, Comparator.comparingInt( o -> o.getAge()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
@@ -51,7 +42,6 @@ public class Lambdas02Exercise {
 
         Person person = null;
 
-        // TODO use FluentIterable
         final Optional<Person> personOptional =
                 FluentIterable.from(persons)
                         .firstMatch(p-> (p.getAge() == 30));
