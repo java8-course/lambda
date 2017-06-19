@@ -1,5 +1,8 @@
 package lambda.part1.exercise;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import data.Person;
 import org.junit.Test;
@@ -7,6 +10,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -25,13 +29,7 @@ public class Lambdas01Exercise {
 
         Arrays.sort(persons, new Comparator<Person>() {
             public int compare(Person o1, Person o2) {
-                if(o1.getAge() < o2.getAge())
-                    return -1;
-                else if(o1.getAge() > o2.getAge())
-                    return 1;
-                else
-                    return 0;
-
+                return Integer.compare(o1.getAge(),o2.getAge());
             }
         });
         assertArrayEquals(persons, new Person[]{
