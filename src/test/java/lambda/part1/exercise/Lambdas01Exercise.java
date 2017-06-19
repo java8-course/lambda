@@ -22,7 +22,7 @@ public class Lambdas01Exercise {
         };
 
         // TODO use Arrays.sort
-      
+
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
                 new Person("name 2", "lastName 1", 30),
@@ -41,8 +41,8 @@ public class Lambdas01Exercise {
         Person person = null;
 
         // TODO use FluentIterable
-     
 
-        assertEquals(person, new Person("name 1", "lastName 2", 30));
+
+        assertEquals(new Person("name 1", "lastName 2", 30), personOptional.get());
     }
 }
