@@ -1,6 +1,5 @@
 package lambda.part1.exercise;
 
-import lambda.part1.example.Lambdas03;
 import org.junit.Test;
 
 import java.util.StringJoiner;
@@ -55,16 +54,16 @@ public class Lambdas03Exercise {
     }
 
     @Test
-    public void strSum() {
+    public void sirProduct() {
         final GenericProduct<String> prod = (a, i) -> stringProd(a, i); // use stringProd;
 
         assertEquals(prod.prod("a", 2), "aa");
     }
 
-    private final String delimeter = "-";
+    private final String delimiter = "-";
 
-    private String stringSumWithDelimeter(String s, int i) {
-        final StringJoiner sj = new StringJoiner(delimeter);
+    private String stringProductWithDelimeter(String s, int i) {
+        final StringJoiner sj = new StringJoiner(delimiter);
         for (int j = 0; j < i; j++) {
             sj.add(s);
         }
@@ -72,8 +71,8 @@ public class Lambdas03Exercise {
     }
 
     @Test
-    public void strSum2() {
-        final GenericProduct<String> prod = this::stringSumWithDelimeter; // use stringSumWithDelimeter;
+    public void strProd2() {
+        final GenericProduct<String> prod = this::stringProductWithDelimeter; // use stringProductWithDelimeter;
 
         assertEquals(prod.prod("a", 3), "a-a-a");
     }
