@@ -21,7 +21,6 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
         Arrays.sort(persons, ((o1, o2) -> o1.getAge() - o2.getAge()));
 
         assertArrayEquals(persons, new Person[]{
@@ -41,7 +40,6 @@ public class Lambdas02Exercise {
 
         Person person = null;
 
-        // TODO use FluentIterable
         final Optional<Person> personOptional =
                 FluentIterable.from(persons).firstMatch(
                         o -> o.getAge() == 30
