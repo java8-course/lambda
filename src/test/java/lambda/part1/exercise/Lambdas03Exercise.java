@@ -39,7 +39,7 @@ public class Lambdas03Exercise {
 
     @Test
     public void generic2() {
-        final GenericProduct<Integer> prod = null; // Use expression lambda
+        final GenericProduct<Integer> prod = (a, i) -> a *i;
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
