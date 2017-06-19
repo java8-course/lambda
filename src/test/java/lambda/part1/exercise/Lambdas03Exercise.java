@@ -71,7 +71,7 @@ public class Lambdas03Exercise {
 
     @Test
     public void strSum2() {
-        final GenericProduct<String> prod = null; // use stringSumWithDelimeter;
+        final GenericProduct<String> prod = this::stringSumWithDelimeter;
 
         assertEquals(prod.prod("a", 3), "a-a-a");
     }
