@@ -1,5 +1,6 @@
 package lambda.part1.exercise;
 
+import lambda.part1.example.Lambdas03;
 import org.junit.Test;
 
 import java.util.StringJoiner;
@@ -18,7 +19,13 @@ public class Lambdas03Exercise {
 
     @Test
     public void generic0() {
-        final GenericProduct<Integer> prod = null; // Use anonymous class
+        final GenericProduct<Integer> prod = new GenericProduct<Integer>() {
+
+            @Override
+            public Integer prod(Integer a, int i) {
+                return i * a;
+            }
+        };
 
         assertEquals(prod.prod(3, 2), Integer.valueOf(6));
     }
