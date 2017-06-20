@@ -78,3 +78,4 @@ public class Lambdas03Exercise {
         assertEquals(prod.prod("a", 3), "a-a-a");
     }
 }
+
