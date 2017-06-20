@@ -65,4 +65,3 @@ public class Lambdas01Exercise {
         assertEquals(person, new Person("name 1", "lastName 2", 30));
     }
 }
-
