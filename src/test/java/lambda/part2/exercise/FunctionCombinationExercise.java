@@ -63,10 +63,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName); // TODO use negate
-        final Predicate<Person> validateLastName = negate(hasEmptyLastName); // TODO use negate
+        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName);
+        final Predicate<Person> validateLastName = negate(hasEmptyLastName);
 
-        final Predicate<Person> validate = and(validateFirstName, validateLastName); // TODO use and
+        final Predicate<Person> validate = and(validateFirstName, validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
@@ -78,10 +78,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = hasEmptyFirstName.negate(); // TODO use Predicate::negate
-        final Predicate<Person> validateLastName = hasEmptyLastName.negate(); // TODO use Predicate::negate
+        final Predicate<Person> validateFirstName = hasEmptyFirstName.negate();
+        final Predicate<Person> validateLastName = hasEmptyLastName.negate();
 
-        final Predicate<Person> validate = validateFirstName.and(validateLastName); // TODO use Predicate::and
+        final Predicate<Person> validate = validateFirstName.and(validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
