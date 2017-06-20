@@ -59,10 +59,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = this.negate(hasEmptyFirstName);
-        final Predicate<Person> validateLastName = this.negate(hasEmptyLastName);
+        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName);
+        final Predicate<Person> validateLastName = negate(hasEmptyLastName);
 
-        final Predicate<Person> validate = this.and(validateFirstName, validateLastName);
+        final Predicate<Person> validate = and(validateFirstName, validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
@@ -74,10 +74,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName);
-        final Predicate<Person> validateLastName = negate(hasEmptyLastName);
+        final Predicate<Person> validateFirstName = hasEmptyFirstName.negate();
+        final Predicate<Person> validateLastName = hasEmptyLastName.negate();
 
-        final Predicate<Person> validate = and(validateFirstName, validateLastName);
+        final Predicate<Person> validate = validateFirstName.and(validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
