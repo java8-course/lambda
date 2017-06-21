@@ -3,6 +3,7 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
+import lambda.part3.example.Filtering;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -32,8 +33,13 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
+            final List<R> res = new ArrayList<R>();
+            list.forEach((T t) ->
+                    res.add(f.apply(t))
+            );
+            return new MapHelper<R>(res);
             // TODO
-            throw new UnsupportedOperationException();
+
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,11 +82,9 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
+                        .map(e-> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e->e.withJobHistory(replaceQaName(e.getJobHistory())))
                 .getList();
 
         final List<Employee> expectedResult =
@@ -108,10 +112,36 @@ public class Mapping {
         assertEquals(mappedEmployees, expectedResult);
     }
 
+    private List<JobHistoryEntry> replaceQaName(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> newHistory = new ArrayList<JobHistoryEntry>();
+        for(JobHistoryEntry history : jobHistory){
+            if(history.getPosition().equals("qa")){
+                newHistory.add(history.withPosition("QA"));
+            }
+            else{
+                newHistory.add(history);
+            }
+        }
+        return newHistory;
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> newHistory = new ArrayList<JobHistoryEntry>();
+        for(JobHistoryEntry history : jobHistory){
+            newHistory.add(history.withDuration(history.getDuration()+1));
+        }
+        return newHistory;
+    }
+
 
     private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T,R> function;
+
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -120,13 +150,20 @@ public class Mapping {
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<>(list).map(function).getList();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            final Function<T, R2> combinedFunction = combine(this.function, f);
+            return new LazyMapHelper<>(list, combinedFunction);
+            //throw new UnsupportedOperationException();
         }
+
+        private <R2> Function<T,R2> combine(Function<T, R> function, Function<R, R2> f) {
+            return function.andThen(f);
+        }
+
 
     }
 
@@ -165,6 +202,9 @@ public class Mapping {
         }
     }
 
+    interface Traversable<T>{
+        void forEach(Consumer<T> c);
+    }
 
 
     @Test
@@ -193,12 +233,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
-                .force();
+                        .map(e-> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e->e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e->e.withJobHistory(replaceQaName(e.getJobHistory())))
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
