@@ -170,7 +170,7 @@ public class Mapping {
                     list,
                     element -> predicate.test(element)
                             ? function.apply(element)
-                            : new ArrayList<>()
+                            : Collections.emptyList()
             );
         }
 
@@ -188,7 +188,8 @@ public class Mapping {
                     list,
                     element -> {
                         final List<R2> results = new ArrayList<>();
-                        function.apply(element).forEach(result -> results.addAll(mapper.apply(result)));
+                        function.apply(element)
+                                .forEach(result -> results.addAll(mapper.apply(result)));
                         return results;
                     }
             );
