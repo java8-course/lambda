@@ -67,10 +67,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = (p) -> negate(hasEmptyFirstName).test(p); // TODO use negate
-        final Predicate<Person> validateLastName = (p) -> negate(hasEmptyLastName).test(p); // TODO use negate
+        final Predicate<Person> validateFirstName = negate(hasEmptyFirstName); // TODO use negate
+        final Predicate<Person> validateLastName = negate(hasEmptyLastName); // TODO use negate
 
-        final Predicate<Person> validate = (p) -> and(validateFirstName, validateLastName).test(p); // TODO use and
+        final Predicate<Person> validate = and(validateFirstName, validateLastName); // TODO use and
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
@@ -82,10 +82,10 @@ public class FunctionCombinationExercise {
         final Predicate<Person> hasEmptyFirstName = p -> p.getFirstName().isEmpty();
         final Predicate<Person> hasEmptyLastName = p -> p.getLastName().isEmpty();
 
-        final Predicate<Person> validateFirstName = (p) -> hasEmptyFirstName.negate().test(p); // TODO use Predicate::negate
-        final Predicate<Person> validateLastName = (p) -> hasEmptyLastName.negate().test(p); // TODO use Predicate::negate
+        final Predicate<Person> validateFirstName = hasEmptyFirstName.negate(); // TODO use Predicate::negate
+        final Predicate<Person> validateLastName = hasEmptyLastName.negate(); // TODO use Predicate::negate
 
-        final Predicate<Person> validate = (p) -> validateFirstName.and(validateLastName).test(p); // TODO use Predicate::and
+        final Predicate<Person> validate = validateFirstName.and(validateLastName); // TODO use Predicate::and
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
