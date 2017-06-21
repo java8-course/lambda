@@ -41,11 +41,11 @@ public class ArrowNotationExercise {
             String n1 = getFullNameFunction.apply(p1);
             String n2 = getFullNameFunction.apply(p2);
             if (n1.length() == n2.length())
-                return -1;
-            if (n1.length() > n2.length())
                 return 0;
+            if (n1.length() > n2.length())
+                return p1.getAge();
             else
-                return 1;
+                return p2.getAge();
         };
     }
     final Function<Function<Person, String>, BiFunction<Person, Person, Integer>> ageOfPersonWithTheLongestFullNameFunction =
@@ -53,11 +53,11 @@ public class ArrowNotationExercise {
         String n1 = getFullNameFunction.apply(p1);
         String n2 = getFullNameFunction.apply(p2);
         if (n1.length() == n2.length())
-            return -1;
-        if (n1.length() > n2.length())
             return 0;
+        if (n1.length() > n2.length())
+            return p1.getAge();
         else
-            return 1;
+             return p2.getAge();
     };
 
     @Test
