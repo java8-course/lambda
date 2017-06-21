@@ -112,21 +112,15 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> replaceQA(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(j -> {
-            if (j.getPosition().equals("qa")) {
-                result.add(j.withPosition("QA"));
-            } else {
-                result.add(j);
-            }
-        });
-        return result;
+        return new MapHelper<>(jobHistory).map(
+                j -> (j.getPosition().equals("qa") ? j.withPosition("QA") : j)
+        ).getList();
     }
 
     private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(j -> result.add(j.withDuration(j.getDuration() + 1)));
-        return result;
+        return new MapHelper<>(jobHistory).map(
+                j -> j.withDuration(j.getDuration() + 1)
+        ).getList();
     }
 
     private static class LazyMapHelper<T, R> {
@@ -144,9 +138,7 @@ public class Mapping {
         }
 
         public List<R> force() {
-            List<R> result = new ArrayList<>();
-            list.forEach(r -> result.add(function.apply(r)));
-            return result;
+            return new MapHelper<T>(list).map(function).getList();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
