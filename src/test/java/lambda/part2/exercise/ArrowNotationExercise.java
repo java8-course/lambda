@@ -14,7 +14,7 @@ public class ArrowNotationExercise {
     @Test
     public void getAge() {
         // Person -> Integer
-        final Function<Person, Integer> getAge = (person) -> person.getAge();
+        final Function<Person, Integer> getAge = Person::getAge;
 
         assertEquals(Integer.valueOf(33), getAge.apply(new Person("", "", 33)));
     }
@@ -22,11 +22,12 @@ public class ArrowNotationExercise {
     @Test
     public void compareAges() {
         // TODO use BiPredicate
-        BiPredicate<Person, Person> compareAges = ((person, person2) -> person.getAge() == person2.getAge());
+        BiPredicate<Person, Person> compareAges = (person, person2) -> person.getAge() == person2.getAge();
         // compareAges: (Person, Person) -> boolean
 
 //        throw new UnsupportedOperationException("Not implemented");
-        assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
+        assertEquals(true, compareAges.test(new Person("a", "b", 22),
+                new Person("c", "d", 22)));
     }
 
     // TODO
