@@ -81,7 +81,7 @@ public class FunctionCombinationExercise {
         final Predicate<Person> validateFirstName = hasEmptyFirstName.negate();
         final Predicate<Person> validateLastName = hasEmptyLastName.negate();
 
-        final Predicate<Person> validate = and(validateFirstName, validateLastName);
+        final Predicate<Person> validate = validateFirstName.and(validateLastName);
 
         assertEquals(true, validate.test(new Person("a", "b", 0)));
         assertEquals(false, validate.test(new Person("", "b", 0)));
