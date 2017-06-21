@@ -32,8 +32,11 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> res = new ArrayList<>();
+            for (T t : list) {
+                res.add(f.apply(t));
+            }
+            return new MapHelper<>(res);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +79,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changePosition(e.getJobHistory(), "qa", "QA")))
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -106,6 +107,25 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+    }
+
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        MapHelper<JobHistoryEntry> adder = new MapHelper<>(jobHistory);
+
+        return adder.map(e -> e.withDuration(e.getDuration() + 1)).getList();
+    }
+
+    private List<JobHistoryEntry> changePosition(List<JobHistoryEntry> jobHistory, String oldPosition, String newPosition) {
+        MapHelper<JobHistoryEntry> changer = new MapHelper<>(jobHistory);
+
+        return changer.map(e -> {
+            if (e.getPosition().equals(oldPosition)) {
+                return e.withPosition(newPosition);
+            } else {
+                return e;
+            }
+        }).getList();
     }
 
 
@@ -165,7 +185,9 @@ public class Mapping {
         }
     }
 
-
+    interface Traversal<T> {
+        void forEach(Consumer<T> c);
+    }
 
     @Test
     public void lazy_mapping() {
@@ -198,7 +220,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
