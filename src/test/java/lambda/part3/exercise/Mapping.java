@@ -32,8 +32,9 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<R> result = new ArrayList<>();
+            list.forEach(a -> result.add(f.apply(a)));
+            return new MapHelper<>(result);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +77,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
-                .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                .map(TODO) // replace qa with QA
-                * */
-                .getList();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changeAllQAToUppercase(e.getJobHistory())))
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -106,6 +105,25 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> result = new ArrayList<>();
+        jobHistory.forEach(job -> {
+            int increasedDuration = job.getDuration() + 1;
+            result.add(job.withDuration(increasedDuration));
+        });
+        return result;
+    }
+
+    private List<JobHistoryEntry> changeAllQAToUppercase(List<JobHistoryEntry> jobHistory) {
+        List<JobHistoryEntry> result = new ArrayList<>();
+        jobHistory.forEach(job -> {
+            String currentPosition = job.getPosition();
+            result.add(currentPosition.equals("qa") ? job.withPosition("QA") : job);
+        });
+
+        return result;
     }
 
 
@@ -166,7 +184,6 @@ public class Mapping {
     }
 
 
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -198,7 +215,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
