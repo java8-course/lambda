@@ -108,22 +108,17 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(job -> {
-            int increasedDuration = job.getDuration() + 1;
-            result.add(job.withDuration(increasedDuration));
-        });
-        return result;
+        return new MapHelper<>(jobHistory)
+                .map((JobHistoryEntry job) -> job.withDuration(job.getDuration() + 1)).getList();
     }
 
     private List<JobHistoryEntry> changeAllQAToUppercase(List<JobHistoryEntry> jobHistory) {
-        List<JobHistoryEntry> result = new ArrayList<>();
-        jobHistory.forEach(job -> {
-            String currentPosition = job.getPosition();
-            result.add(currentPosition.equals("qa") ? job.withPosition("QA") : job);
-        });
-
-        return result;
+        return new MapHelper<>(jobHistory)
+                .map((JobHistoryEntry job) -> {
+                    String currentPosition = job.getPosition();
+                    return currentPosition.equals("qa") ? job.withPosition("QA") : job;
+                })
+                .getList();
     }
 
 
