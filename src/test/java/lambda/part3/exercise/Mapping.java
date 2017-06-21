@@ -9,10 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -130,8 +127,12 @@ public class Mapping {
 
 
     private static class LazyMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, R> function;
 
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -139,13 +140,11 @@ public class Mapping {
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<>(list).map(function).getList();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new LazyMapHelper<>(list, function.andThen(f));
         }
 
     }
@@ -185,10 +184,6 @@ public class Mapping {
         }
     }
 
-    interface Traversal<T> {
-        void forEach(Consumer<T> c);
-    }
-
     @Test
     public void lazy_mapping() {
         final List<Employee> employees =
@@ -215,11 +210,9 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changePosition(e.getJobHistory(), "qa", "QA")))
                         .force();
 
         final List<Employee> expectedResult =

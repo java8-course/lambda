@@ -2,6 +2,7 @@ package lambda.part3.exercise;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -57,6 +58,11 @@ public class FilterMap {
         public List<T> force() {
             // TODO
             throw new UnsupportedOperationException();
+        }
+
+
+        interface Traversal<T> {
+            void forEach(Consumer<T> c);
         }
     }
 }
