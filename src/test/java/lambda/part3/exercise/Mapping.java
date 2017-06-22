@@ -302,7 +302,6 @@ public class Mapping {
             };
         }
 
-        //TODO tests force
         static <T> Traversable<T> from (List<T> l){
 
             return new Traversable<T>() {
@@ -312,5 +311,65 @@ public class Mapping {
                 }
             };
         }
+
+        default List<T> force(){
+            final List<T> res = new ArrayList<>();
+            this.forEach(res::add);
+            return res;
+        }
+    }
+
+    @Test
+    public void traversalMapTests() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+
+        final List<Employee> mappedEmployees =
+                Traversable.from(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John"))).force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("John", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
     }
 }
