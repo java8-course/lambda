@@ -3,6 +3,7 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -319,9 +320,11 @@ public class Mapping {
         }
     }
 
-    @Test
-    public void traversalMapTests() {
-        final List<Employee> employees =
+    private List<Employee> employees;
+
+    @Before
+    public void initEmployees(){
+        employees =
                 Arrays.asList(
                         new Employee(
                                 new Person("a", "Galt", 30),
@@ -342,8 +345,10 @@ public class Mapping {
                                         new JobHistoryEntry(5, "qa", "epam")
                                 ))
                 );
+    }
 
-
+    @Test
+    public void traversalMapTests() {
         final List<Employee> mappedEmployees =
                 Traversable.from(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John"))).force();
@@ -375,29 +380,6 @@ public class Mapping {
 
     @Test
     public void traversalFilterTests() {
-        final List<Employee> employees =
-                Arrays.asList(
-                        new Employee(
-                                new Person("a", "Galt", 30),
-                                Arrays.asList(
-                                        new JobHistoryEntry(2, "dev", "epam"),
-                                        new JobHistoryEntry(1, "dev", "google")
-                                )),
-                        new Employee(
-                                new Person("b", "Doe", 40),
-                                Arrays.asList(
-                                        new JobHistoryEntry(3, "qa", "yandex"),
-                                        new JobHistoryEntry(1, "qa", "epam"),
-                                        new JobHistoryEntry(1, "dev", "abc")
-                                )),
-                        new Employee(
-                                new Person("c", "White", 50),
-                                Collections.singletonList(
-                                        new JobHistoryEntry(5, "qa", "epam")
-                                ))
-                );
-
-
         final List<Employee> filteredEmployees =
                 Traversable.from(employees)
                         .filter(e -> e.getPerson().getAge() == 40).force();
