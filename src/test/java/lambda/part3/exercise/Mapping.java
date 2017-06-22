@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -132,16 +131,20 @@ public class Mapping {
 
     private static class LazyFlatMapHelper<T, R> {
 
+        private List<T> list;
+        private Function<T, List<R>> function;
+
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<T>(list).flatMap(function).getList();
         }
 
         // TODO filter
@@ -154,6 +157,10 @@ public class Mapping {
             return flatMap(listFunction);
         }
 
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> p) {
+            return flatMap(r -> p.test(r) ? Collections.singletonList(r) : Collections.emptyList());
+        }
+
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
             throw new UnsupportedOperationException();
@@ -161,11 +168,49 @@ public class Mapping {
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+            Function<T, List<R2>> listFunction = t -> new MapHelper<R>(function.apply(t)).flatMap(f).getList();
+            new LazyFlatMapHelper<>(list, listFunction);
         }
     }
 
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        static <T> Traversable<T> from(List<T> l) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+    }
+
+    interface ReachIterable<T> {
+        boolean hasNext();
+
+        T next();
+
+        //filter
+        //map
+        //flatMap
+
+        // boolean anyMatch(Predicate<T>)
+        // allMatch
+        //nonMatch
+    }
 
     @Test
     public void lazy_mapping() {
