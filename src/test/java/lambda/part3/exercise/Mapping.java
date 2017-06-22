@@ -196,69 +196,68 @@ public class Mapping {
                     t -> new MapHelper<>(function.apply(t)).flatMap(f).getList();
             return new LazyFlatMapHelper<>(list, listFunction);
         }
-
-        interface Traversable<T> {
-            void forEach(Consumer<T> c);
-
-            default <R> Traversable<R> map(Function<T, R> f) {
-                Traversable<T> self = this;
-
-                return new Traversable<R>() {
-                    @Override
-                    public void forEach(Consumer<R> c) {
-                        self.forEach(t -> c.accept(f.apply(t)));
-                    }
-                };
-            }
-
-            default <T> List<T> force() {
-                Traversable<T> self = (Traversable<T>) this;
-                List<T> temp = new ArrayList<>();
-                self.forEach(e -> temp.add(e));
-                return temp;
-            }
-
-            static <T> Traversable<T> from(List<T> l) {
-
-                return new Traversable<T>() {
-                    @Override
-                    public void forEach(Consumer<T> c) {
-                        l.forEach(t -> c.accept(t));
-                    }
-                };
-            }
-
-            default <T> Traversable<T> filter(Predicate<T> p) {
-                Traversable<T> self = (Traversable<T>) this;
-
-                return new Traversable<T>() {
-                    @Override
-                    public void forEach(Consumer<T> c) {
-                        self.forEach(t -> {
-                            if (p.test(t)) {
-                                c.accept(t);
-                            }
-                        });
-                    }
-                };
-            }
-
-            default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
-                Traversable<T> self = this;
-
-                return new Traversable<R>() {
-                    @Override
-                    public void forEach(Consumer<R> c) {
-                        self.forEach(t ->
-                                f.apply(t).forEach(c));
-                    }
-                };
-            }
-
-            //TODO: flatMap, force, filter, test, from
-        }
     }
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default <T> List<T> force() {
+            Traversable<T> self = (Traversable<T>) this;
+            List<T> temp = new ArrayList<>();
+            self.forEach(e -> temp.add(e));
+            return temp;
+        }
+
+        static <T> Traversable<T> from(List<T> l) {
+
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    l.forEach(t -> c.accept(t));
+                }
+            };
+        }
+
+        default <T> Traversable<T> filter(Predicate<T> p) {
+            Traversable<T> self = (Traversable<T>) this;
+
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(t -> {
+                        if (p.test(t)) {
+                            c.accept(t);
+                        }
+                    });
+                }
+            };
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t ->
+                            f.apply(t).forEach(c));
+                }
+            };
+        }
+
+        //TODO: flatMap, force, filter, test, from
+    }
 
     @Test
     public void lazy_mapping() {
@@ -289,12 +288,20 @@ public class Mapping {
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(e -> e.withJobHistory(qaToUppercase(e.getJobHistory())))
+                        .force();
+
+        final List<Employee> mappedEmployeesTraversable =
+                Traversable.from(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(qaToUppercase(e.getJobHistory())))
+                        .force();
+
                 /*
                 .map(TODO) // change name to John
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -319,5 +326,6 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+        assertEquals(mappedEmployeesTraversable, expectedResult);
     }
 }
