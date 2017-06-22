@@ -169,7 +169,7 @@ public class Mapping {
             return new MapHelper<>(list).flatMap(function).getList();
         }
 
-        public LazyFlatMapHelper<T, R> filter(Predicate<R> p){
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> p) {
             return flatMap(r -> p.test(r) ? Collections.singletonList(r) : Collections.emptyList());
         }
         // (T -> boolean) -> (T -> [T])
@@ -276,14 +276,14 @@ public class Mapping {
             };
         }
 
-        default Traversable<T> filter(Predicate<T> p){
+        default Traversable<T> filter(Predicate<T> p) {
             Traversable<T> self = this;
 
             return new Traversable<T>() {
                 @Override
                 public void forEach(Consumer<T> c) {
                     self.forEach(t -> {
-                        if (p.test(t)){
+                        if (p.test(t)) {
                             c.accept(t);
                         }
                     });
@@ -292,7 +292,7 @@ public class Mapping {
         }
 
         //Traversable<T> ->(T -> Traversable<R>) -> Traversable<R>
-        default <R> Traversable<R> flatMap(Function<T, List<R>> f){
+        default <R> Traversable<R> flatMap(Function<T, Traversable<R>> f) {
             Traversable<T> self = this;
 
             return new Traversable<R>() {
@@ -303,7 +303,7 @@ public class Mapping {
             };
         }
 
-        static <T> Traversable<T> from (List<T> l){
+        static <T> Traversable<T> from(List<T> l) {
 
             return new Traversable<T>() {
                 @Override
@@ -313,7 +313,7 @@ public class Mapping {
             };
         }
 
-        default List<T> force(){
+        default List<T> force() {
             final List<T> res = new ArrayList<>();
             this.forEach(res::add);
             return res;
@@ -323,7 +323,7 @@ public class Mapping {
     private List<Employee> employees;
 
     @Before
-    public void initEmployees(){
+    public void initEmployees() {
         employees =
                 Arrays.asList(
                         new Employee(
@@ -396,5 +396,23 @@ public class Mapping {
                 );
 
         assertEquals(filteredEmployees, expectedResult);
+    }
+
+    @Test
+    public void traversalFlatMapTests() {
+        final List<JobHistoryEntry> flatMappedEmployees =
+                Traversable.from(employees)
+                        .filter(e -> e.getPerson().getAge() == 40)
+                        .flatMap(e -> Traversable.from(e.getJobHistory())).force();
+
+        final List<JobHistoryEntry> expectedResult =
+                Arrays.asList(
+                        new JobHistoryEntry(3, "qa", "yandex"),
+                        new JobHistoryEntry(1, "qa", "epam"),
+                        new JobHistoryEntry(1, "dev", "abc")
+
+                );
+
+        assertEquals(flatMappedEmployees, expectedResult);
     }
 }
