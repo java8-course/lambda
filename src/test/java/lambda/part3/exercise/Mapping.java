@@ -3,7 +3,6 @@ package lambda.part3.exercise;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
-import jdk.nashorn.internal.scripts.JO;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -33,11 +32,13 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            List<R> result = new ArrayList<>();
+            // TODO
+            final List<R> result = new ArrayList<>();
 
             for (T l : list) {
                 result.add(f.apply(l));
             }
+
             return new MapHelper<>(result);
         }
 
@@ -81,7 +82,7 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                        .map(employee -> employee.withPerson(employee.getPerson().withFirstName("John")))
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(e -> e.withJobHistory(fixQAPosition(e.getJobHistory())))
                         .getList();
@@ -112,26 +113,23 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> fixQAPosition(List<JobHistoryEntry> jobHistory) {
-        return new MapHelper<>(jobHistory)
-                .map(history -> history.withPosition(history.getPosition().replace("qa", "QA")))
-                .getList();
+        return new MapHelper<JobHistoryEntry>(jobHistory)
+                .map(j -> j.withPosition(j.
+                        getPosition().
+                        replace("qa", "QA"))).getList();
     }
 
-    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistoryEntries) {
-        return new MapHelper<>(jobHistoryEntries)
-                .map(history -> history.withDuration(history.getDuration() + 1))
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+
+        return new MapHelper<JobHistoryEntry>(jobHistory)
+                .map(j -> j.withDuration(j.getDuration() + 1))
                 .getList();
     }
 
 
     private static class LazyMapHelper<T, R> {
 
-        private List<T> list;
-        private Function<T, R> function;
-
         public LazyMapHelper(List<T> list, Function<T, R> function) {
-            this.list = list;
-            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -139,47 +137,35 @@ public class Mapping {
         }
 
         public List<R> force() {
-            List<R> result = new ArrayList<>();
-
-            for (T l : list) {
-                result.add(function.apply(l));
-            }
-
-            return result;
+            // TODO
+            throw new UnsupportedOperationException();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
-            return new LazyMapHelper<>(list, function.andThen(f));
+            // TODO
+            throw new UnsupportedOperationException();
         }
 
     }
 
     private static class LazyFlatMapHelper<T, R> {
 
-        private List<T> list;
-        private Function<T, List<R>> function;
-
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
-            this.list = list;
-            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper<>(list, Arrays::asList);
+            throw new UnsupportedOperationException();
         }
 
         public List<R> force() {
-            return new MapHelper<>(list).flatMap(function).getList();
+            // TODO
+            throw new UnsupportedOperationException();
         }
 
         // TODO filter
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
-        public LazyFlatMapHelper<T, R> filter(Predicate<T> predicate) {
-            return new LazyFlatMapHelper<>(list,
-                    l -> predicate.test(l) ? function.apply(l) : Collections.emptyList());
-        }
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
             final Function<R, List<R2>> listFunction = rR2TorListR2(f);
@@ -193,16 +179,9 @@ public class Mapping {
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            return new LazyFlatMapHelper<>(list, l -> {
-                List<R2> results = new ArrayList<>();
-                function.apply(l)
-                        .forEach(result -> results.addAll(f.apply(result)));
-                return results;
-            });
+            throw new UnsupportedOperationException();
         }
     }
-
-    
 
 
     @Test
@@ -231,15 +210,12 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                        .map(employee -> employee.withPerson(employee.getPerson().withFirstName("John")))
-                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
-                        .map(e -> e.withJobHistory(fixQAPosition(e.getJobHistory())))
-                        .force();
                 /*
                 .map(TODO) // change name to John
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -265,4 +241,47 @@ public class Mapping {
 
         assertEquals(mappedEmployees, expectedResult);
     }
+
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        static <T> Traversable<T> from(List<T> l) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+
+                }
+            };
+        }
+    }
+
+    interface ReachIterable<T> {
+
+        boolean forNext(Consumer<T> c);
+        //filter
+        //map
+        //flatMap
+
+        // anyMatch(Predicate<T>)
+        //allMatch
+        //nonMatch
+
+        //Option<T> firstMatch(Predicate <T>)
+
+    }
+
 }
+
+
