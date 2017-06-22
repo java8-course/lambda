@@ -5,10 +5,7 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -358,6 +355,60 @@ public class Mapping {
                 Arrays.asList(4, 5),
                 Traversable.from(dataList).filter(i -> i > 3).force()
         );
+    }
+
+    //TODO: interface and test
+    interface ReachIterable<T> {
+
+        boolean forNext(Consumer<T> c);
+
+        default ReachIterable<T> filter(Predicate<T> p) {
+            throw new UnsupportedOperationException();
+        }
+
+        default <R> ReachIterable<R> map(Function<T,R> f) {
+            throw new UnsupportedOperationException();
+        }
+
+        default <R> ReachIterable<R> flatMap(Function<T,List<R>> f) {
+            throw new UnsupportedOperationException();
+        }
+
+        default boolean anyMatch(Predicate<T> p) {
+
+        }
+
+        default boolean allMatch(Predicate<T> p) {
+
+        }
+
+        default boolean nonMatch(Predicate<T> p) {
+
+        }
+
+        default Optional<T> firstMatch(Predicate<T> p) {
+
+        }
+
+        default List<T> force() {
+
+        }
+
+        default ReachIterable<T> from(List<T> l) {
+            return new ReachIterable<T>() {
+                int i = 0;
+
+                @Override
+                public boolean forNext(Consumer<T> c) {
+                    if (i < l.size()) {
+                        c.accept(l.get(i));
+                        return true;
+                    }
+                    return false;
+                }
+            };
+        }
+
     }
 
 }
