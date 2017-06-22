@@ -372,4 +372,47 @@ public class Mapping {
 
         assertEquals(mappedEmployees, expectedResult);
     }
+
+    @Test
+    public void traversalFilterTests() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+
+        final List<Employee> filteredEmployees =
+                Traversable.from(employees)
+                        .filter(e -> e.getPerson().getAge() == 40).force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                ))
+                );
+
+        assertEquals(filteredEmployees, expectedResult);
+    }
 }
