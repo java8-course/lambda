@@ -59,10 +59,5 @@ public class FilterMap {
             // TODO
             throw new UnsupportedOperationException();
         }
-
-
-        interface Traversal<T> {
-            void forEach(Consumer<T> c);
-        }
     }
 }
