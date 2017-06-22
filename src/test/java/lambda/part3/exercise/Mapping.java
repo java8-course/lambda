@@ -12,6 +12,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class Mapping {
 
@@ -320,8 +322,7 @@ public class Mapping {
             return new Traversable<R>() {
                 @Override
                 public void forEach(Consumer<R> c) {
-                    self.forEach(t ->
-                            f.apply(t).forEach(c));
+                    self.forEach(t -> f.apply(t).forEach(c));
                 }
             };
         }
@@ -362,27 +363,90 @@ public class Mapping {
         boolean forNext(Consumer<T> c);
 
         default ReachIterable<T> filter(Predicate<T> p) {
-            throw new UnsupportedOperationException();
+            ReachIterable<T> self = this;
+
+            return new ReachIterable<T>() {
+                @Override
+                public boolean forNext(Consumer<T> c) {
+                    return self.forNext(t -> {
+                        if (p.test(t)) {
+                            c.accept(t);
+                        }
+                    });
+                }
+            };
         }
 
         default <R> ReachIterable<R> map(Function<T,R> f) {
-            throw new UnsupportedOperationException();
+            ReachIterable<T> self = this;
+
+            return new ReachIterable<R>() {
+                @Override
+                public boolean forNext(Consumer<R> c) {
+                    return self.forNext(t ->
+                            c.accept(f.apply(t))
+                    );
+                }
+            };
         }
 
         default <R> ReachIterable<R> flatMap(Function<T,List<R>> f) {
-            throw new UnsupportedOperationException();
+            ReachIterable<T> self = this;
+
+            return new ReachIterable<R>() {
+                @Override
+                public boolean forNext(Consumer<R> c) {
+                    return self.forNext(t ->
+                            f.apply(t).forEach(c)
+                    );
+                }
+            };
         }
 
         default boolean anyMatch(Predicate<T> p) {
-            throw new UnsupportedOperationException();
+            final boolean[] found = {false};
+            final boolean[] isNotEnd = {true};
+            while (!found[0] && isNotEnd[0]) {
+                isNotEnd[0] = forNext(t -> {
+                    if (p.test(t)) {
+                        found[0] = true;
+                    }
+                });
+            }
+
+            return found[0];
         }
 
         default boolean allMatch(Predicate<T> p) {
-            throw new UnsupportedOperationException();
+            final boolean[] isAllMatch = {true};
+            final boolean[] isNotEnd = {true};
+            while (isAllMatch[0] && isNotEnd[0]) {
+                isNotEnd[0] = forNext(t -> {
+                    if (!p.test(t)) {
+                        isAllMatch[0] = false;
+                    }
+                });
+            }
+
+            return isAllMatch[0];
         }
 
         default boolean nonMatch(Predicate<T> p) {
-            throw new UnsupportedOperationException();
+            if (anyMatch(p)) {
+                return false;
+            }
+
+            final boolean[] isNonMatch = {true};
+            final boolean[] isNotEnd = {true};
+            while (isNonMatch[0] && isNotEnd[0]) {
+                isNotEnd[0] = forNext(t -> {
+                    if (p.test(t)) {
+                        isNonMatch[0] = false;
+                    }
+                });
+            }
+
+            return isNonMatch[0];
         }
 
         default Optional<T> firstMatch(Predicate<T> p) {
@@ -404,6 +468,7 @@ public class Mapping {
                 public boolean forNext(Consumer<T> c) {
                     if (i < l.size()) {
                         c.accept(l.get(i));
+                        i++;
                         return true;
                     }
                     return false;
@@ -441,6 +506,45 @@ public class Mapping {
                 Arrays.asList("1", "2", "3", "4", "5"),
                 ReachIterable.from(dataList).map(String::valueOf).force()
         );
+    }
+
+    @Test
+    public void testReachIterableMethodAnyMatch() {
+        assertTrue(ReachIterable.from(Arrays.asList(1, 2, 3, 4, 5))
+                .anyMatch(i -> i == 3));
+
+        assertTrue(ReachIterable.from(Arrays.asList(1, 2, 3, 3, 5))
+                .anyMatch(i -> i == 3));
+
+        assertFalse(ReachIterable.from(Arrays.asList(1, 2, 4, 4, 5))
+                .anyMatch(i -> i == 3));
+    }
+
+    @Test
+    public void testReachIterableMethodAllMatch() {
+        assertTrue(ReachIterable.from(Arrays.asList(1, 1, 1, 1, 1))
+                .allMatch(i -> i == 1));
+
+        assertTrue(ReachIterable.from(Collections.singletonList(1))
+                .allMatch(i -> i == 1));
+
+        assertFalse(ReachIterable.from(Arrays.asList(1, 2))
+                .allMatch(i -> i == 1));
+    }
+
+    @Test
+    public void testReachIterableMethodNonMatch() {
+        assertTrue(ReachIterable.from(Arrays.asList(2, 2, 2, 2, 2))
+                .nonMatch(i -> i == 1));
+
+        assertFalse(ReachIterable.from(Arrays.asList(1, 1, 1, 1, 1))
+                .nonMatch(i -> i == 1));
+
+        assertFalse(ReachIterable.from(Collections.singletonList(1))
+                .nonMatch(i -> i == 1));
+
+        assertFalse(ReachIterable.from(Arrays.asList(1, 2))
+                .nonMatch(i -> i == 1));
     }
 
 }
