@@ -160,11 +160,6 @@ public class Mapping {
             return results;
         }
 
-        // TODO filter
-        // (T -> boolean) -> (T -> [T])
-        // filter: [T1, T2] -> (T -> boolean) -> [T2]
-        // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
-
         public LazyFlatMapHelper<T, R> filter(final Predicate<T> predicate) {
             return new LazyFlatMapHelper<>(
                     list,
