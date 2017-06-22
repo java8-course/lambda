@@ -357,7 +357,6 @@ public class Mapping {
         );
     }
 
-    //TODO: interface and test
     interface ReachIterable<T> {
 
         boolean forNext(Consumer<T> c);
@@ -375,26 +374,29 @@ public class Mapping {
         }
 
         default boolean anyMatch(Predicate<T> p) {
-
+            throw new UnsupportedOperationException();
         }
 
         default boolean allMatch(Predicate<T> p) {
-
+            throw new UnsupportedOperationException();
         }
 
         default boolean nonMatch(Predicate<T> p) {
-
+            throw new UnsupportedOperationException();
         }
 
         default Optional<T> firstMatch(Predicate<T> p) {
-
+            throw new UnsupportedOperationException();
         }
 
         default List<T> force() {
+            List<T> result = new ArrayList<>();
+            while (forNext(result::add));
 
+            return result;
         }
 
-        default ReachIterable<T> from(List<T> l) {
+        static <T> ReachIterable<T> from(List<T> l) {
             return new ReachIterable<T>() {
                 int i = 0;
 
@@ -409,6 +411,36 @@ public class Mapping {
             };
         }
 
+    }
+
+    @Test
+    public void testReachIterableMethodFilter() {
+        List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
+
+        assertEquals(
+                Arrays.asList(4, 5),
+                ReachIterable.from(dataList).filter(i -> i > 3).force()
+        );
+    }
+
+    @Test
+    public void testReachIterableMethodFlatMap() {
+        List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
+
+        assertEquals(
+                Arrays.asList(1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5),
+                ReachIterable.from(dataList).flatMap(i -> Collections.nCopies(i, i)).force()
+        );
+    }
+
+    @Test
+    public void testReachIterableMethodMap() {
+        List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
+
+        assertEquals(
+                Arrays.asList("1", "2", "3", "4", "5"),
+                ReachIterable.from(dataList).map(String::valueOf).force()
+        );
     }
 
 }
