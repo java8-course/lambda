@@ -169,16 +169,22 @@ public class Mapping {
 
     private static class LazyFlatMapHelper<T, R> {
 
+        private final List<T> list;
+        private final Function<T, List<R>> function;
+
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Collections::singletonList);
         }
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<T>(list).flatMap(function).getList();
+
         }
 
         // TODO filter
@@ -187,8 +193,12 @@ public class Mapping {
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
+            final Function<R, List<R2>> listFunction = f.andThen(Collections::singletonList);
             return flatMap(listFunction);
+        }
+
+        public LazyFlatMapHelper<T,R> filter(Predicate<R> p){
+            return flatMap(r->p.test(r) ? Collections.singletonList(r) : Collections.emptyList());
         }
 
         // (R -> R2) -> (R -> [R2])
@@ -198,13 +208,69 @@ public class Mapping {
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+            Function<T, List<R2>> listFunction =
+                    t-> new MapHelper<R>(function.apply(t)).flatMap(f).getList();
+
+            return new LazyFlatMapHelper<>(list, listFunction);
         }
     }
 
     interface Traversable<T>{
         void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T,R> f){
+            Traversable<T> self = this;
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t-> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default <T> Traversable<T> filter(Predicate<T> p){
+            Traversable<T> self = (Traversable<T>) this;
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(t->{
+                        if(p.test(t)){
+                            c.accept(t);
+                        }
+                    });
+                }
+            };
+        }
+        default <R> Traversable<R> flatMap(Function<T,List<R>> f){
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t ->
+                        f.apply(t).forEach(c));
+                }
+            };
+        }
+
+        default <T> List<T> force(){
+            Traversable<T> self = (Traversable<T>) this;
+            List<T> list = new ArrayList<T>();
+            self.forEach(list::add);
+            return list;
+        }
+
+        static <T> Traversable<T>  from(List<T> l){
+
+            return new Traversable<T>(){
+                @Override
+                public void forEach(Consumer<T> c){
+                    l.forEach(t->c.accept(t));
+                }
+            };
+        }
     }
+
 
 
     @Test
@@ -233,6 +299,62 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
+                        .map(e-> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e->e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e->e.withJobHistory(replaceQaName(e.getJobHistory())))
+                        .force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "dev", "epam"),
+                                        new JobHistoryEntry(2, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("John", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(6, "QA", "epam")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    @Test
+    public void traversable() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> mappedEmployees =
+                Traversable.from(employees)
                         .map(e-> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e->e.withJobHistory(addOneYear(e.getJobHistory())))
                         .map(e->e.withJobHistory(replaceQaName(e.getJobHistory())))
