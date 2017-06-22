@@ -281,4 +281,83 @@ public class Mapping {
                 .force();
     }
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default List<T> force() {
+            List<T> result = new ArrayList<>();
+            forEach(result::add);
+
+            return result;
+        }
+
+        default <R> Traversable<R> map(Function<T,R> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default Traversable<T> filter(Predicate<T> p) {
+            Traversable<T> self = this;
+
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(t -> {
+                        if (p.test(t)) {
+                            c.accept(t);
+                        }
+                    });
+                }
+            };
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t ->
+                            f.apply(t).forEach(c));
+                }
+            };
+        }
+
+        static <T> Traversable<T> from(List<T> l) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    l.forEach(c);
+                }
+            };
+        }
+
+    }
+
+    @Test
+    public void testTraversable() {
+        List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
+
+        assertEquals(
+                Arrays.asList("1", "2", "3", "4", "5"),
+                Traversable.from(dataList).map(String::valueOf).force()
+        );
+
+        assertEquals(
+                Arrays.asList(1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5),
+                Traversable.from(dataList).flatMap(i -> Collections.nCopies(i, i)).force()
+        );
+
+        assertEquals(
+                Arrays.asList(4, 5),
+                Traversable.from(dataList).filter(i -> i > 3).force()
+        );
+    }
+
 }
