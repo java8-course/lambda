@@ -33,7 +33,12 @@ public class Mapping {
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            List<R> result = new ArrayList<>();
+            for (T t : list) {
+                result.add(f.apply(t));
+            }
+            return new MapHelper<>(result);
+//            throw new UnsupportedOperationException();
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -76,12 +81,15 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(qaToQA(e.getJobHistory())))
                 /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -108,10 +116,28 @@ public class Mapping {
         assertEquals(mappedEmployees, expectedResult);
     }
 
+    private List<JobHistoryEntry> qaToQA(List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory).map(job -> {
+            if (job.getPosition().equals("qa")) {
+                return job.withPosition(job.getPosition().toUpperCase());
+            }
+            return job;
+        }).getList();
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        return new MapHelper<>(jobHistory).map(job -> job.withDuration(job.getDuration() + 1)).getList();
+    }
+
 
     private static class LazyMapHelper<T, R> {
 
+        private final List<T> list;
+        private Function<T, R> function;
+
         public LazyMapHelper(List<T> list, Function<T, R> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyMapHelper<T, T> from(List<T> list) {
@@ -120,28 +146,45 @@ public class Mapping {
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            List<R> result = new ArrayList<>();
+            for (T t : list) {
+                result.add(function.apply(t));
+            }
+            return result;
+//            throw new UnsupportedOperationException();
         }
 
         public <R2> LazyMapHelper<T, R2> map(Function<R, R2> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            return new LazyMapHelper<>(list, function.andThen(f));
+//            throw new UnsupportedOperationException();
         }
 
     }
 
     private static class LazyFlatMapHelper<T, R> {
 
+        private final List<T> list;
+        private Function<T, List<R>> function;
+
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Arrays::asList);
+//            throw new UnsupportedOperationException();
         }
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            List<R> result = new ArrayList<>();
+            for (T t : list) {
+                result.addAll(function.apply(t));
+            }
+            return result;
+//            throw new UnsupportedOperationException();
         }
 
         // TODO filter
@@ -156,7 +199,8 @@ public class Mapping {
 
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+            return element -> Collections.singletonList(f.apply(element));
+//            throw new UnsupportedOperationException();
         }
 
         // TODO *
@@ -164,7 +208,6 @@ public class Mapping {
             throw new UnsupportedOperationException();
         }
     }
-
 
 
     @Test
@@ -193,12 +236,15 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
+                        .map(e->e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e->e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e->e.withJobHistory(qaToQA(e.getJobHistory())))
                 /*
                 .map(TODO) // change name to John
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
