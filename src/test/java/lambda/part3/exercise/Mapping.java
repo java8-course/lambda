@@ -450,7 +450,19 @@ public class Mapping {
         }
 
         default Optional<T> firstMatch(Predicate<T> p) {
-            throw new UnsupportedOperationException();
+            final Object[] object = new Object[1];
+            final boolean[] isMatch = {false};
+            final boolean[] isNotEnd = {true};
+            while (!isMatch[0] && isNotEnd[0]) {
+                isNotEnd[0] = forNext(t -> {
+                    if (p.test(t)) {
+                        isMatch[0] = true;
+                        object[0] = t;
+                    }
+                });
+            }
+
+            return Optional.ofNullable((T) object[0]);
         }
 
         default List<T> force() {
@@ -545,6 +557,22 @@ public class Mapping {
 
         assertFalse(ReachIterable.from(Arrays.asList(1, 2))
                 .nonMatch(i -> i == 1));
+    }
+
+    @Test
+    public void testReachIterableFirstMatch() {
+        String actual =
+                ReachIterable.from(Arrays.asList("a", "b", "c", "dd", "ee"))
+                .firstMatch(s -> s.length() > 1)
+                .orElseThrow(AssertionError::new);
+
+        assertEquals("dd", actual);
+
+        Optional<String> optional =
+                ReachIterable.from(Arrays.asList("a", "b", "c", "d", "e"))
+                .firstMatch(s -> s.length() > 1);
+
+        assertFalse(optional.isPresent());
     }
 
 }
