@@ -186,6 +186,7 @@ public class Mapping {
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
             throw new UnsupportedOperationException();
         }
+
         public LazyFlatMapHelper<T, R> filter (Predicate<R> p){
             return flatMap(r -> p.test(r) ? Collections.singletonList(r) : Collections.emptyList());
         }
@@ -212,10 +213,9 @@ public class Mapping {
             };
         }
 
-        default <T> List<T> force() {
-            Traversable<T> self = (Traversable<T>) this;
+        default List<T> force() {
             List<T> temp = new ArrayList<>();
-            self.forEach(e -> temp.add(e));
+            temp.forEach(temp::add);
             return temp;
         }
 
@@ -224,13 +224,13 @@ public class Mapping {
             return new Traversable<T>() {
                 @Override
                 public void forEach(Consumer<T> c) {
-                    l.forEach(t -> c.accept(t));
+                    l.forEach(c);
                 }
             };
         }
 
-        default <T> Traversable<T> filter(Predicate<T> p) {
-            Traversable<T> self = (Traversable<T>) this;
+        default Traversable<T> filter(Predicate<T> p) {
+            Traversable<T> self = this;
 
             return new Traversable<T>() {
                 @Override
