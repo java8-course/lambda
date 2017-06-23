@@ -23,12 +23,15 @@ public class TraversableTests {
     private interface Traversable<T> {
         void forEach(final Consumer<T> consumer);
 
-        static <T> Traversable from(final List<T> list) {
+        static <T> Traversable<T> from(final List<T> list) {
             return list::forEach;
         }
 
-        default <R> Traversable map(final Function<T, R> mapper) {
-            return null;
+        default <R> Traversable<R> map(final Function<T, R> mapper) {
+            final Traversable<T> self = this;
+            return consumer -> self.forEach(
+                    e -> consumer.accept(mapper.apply(e))
+            );
         }
 
         default Traversable<T> filter(final Predicate<T> predicate) {
@@ -108,9 +111,8 @@ public class TraversableTests {
 
     @Test
     public void testThatMethodFilterWorksCorrect() {
-        Predicate<Employee> getEmployeeOlderThan30 = e -> e.getPerson().getAge() > 30;
         final List<Employee> result = Traversable.from(employees)
-                .filter(getEmployeeOlderThan30)
+                .filter(e -> e.getPerson().getAge() > 30)
                 .toList();
         final List<Employee> expected =
                 Arrays.asList(
@@ -129,5 +131,53 @@ public class TraversableTests {
                 );
 
         assertEquals(result, expected);
+    }
+
+    @Test
+    public void testThatMethodMapWorksCorrect() {
+        final List<Employee> mappedEmployees =
+                Traversable.from(employees)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(changeAllQAToUppercase(e.getJobHistory())))
+                        .toList();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "dev", "epam"),
+                                        new JobHistoryEntry(2, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("John", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(6, "QA", "epam")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
+        return Traversable.from(jobHistory)
+                .map((JobHistoryEntry job) -> job.withDuration(job.getDuration() + 1)).toList();
+    }
+
+    private List<JobHistoryEntry> changeAllQAToUppercase(List<JobHistoryEntry> jobHistory) {
+        return Traversable.from(jobHistory)
+                .map((JobHistoryEntry job) -> {
+                    String currentPosition = job.getPosition();
+                    return currentPosition.equals("qa") ? job.withPosition("QA") : job;
+                })
+                .toList();
     }
 }
