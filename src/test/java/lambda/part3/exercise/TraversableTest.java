@@ -28,20 +28,17 @@ public class TraversableTest {
         }
 
         default <R> Traversable<R> map(final Function<T, R> mapper) {
-            final Traversable<T> self = this;
-            return consumer -> self.forEach(element -> consumer.accept(mapper.apply(element)));
+            return consumer -> this.forEach(element -> consumer.accept(mapper.apply(element)));
         }
 
         default Traversable<T> filter(final Predicate<T> predicate) {
-            final Traversable<T> self = this;
-            return consumer -> self.forEach(
+            return consumer -> this.forEach(
                     element -> { if (predicate.test(element)) consumer.accept(element); }
             );
         }
 
         default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
-            final Traversable<T> self = this;
-            return consumer -> self.forEach(
+            return consumer -> this.forEach(
                     element -> function.apply(element).forEach(consumer)
             );
         }
