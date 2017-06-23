@@ -192,7 +192,7 @@ public class Mapping {
             return new Traversable<T>() {
                 @Override
                 public void forEach(Consumer<T> c) {
-                    throw new UnsupportedOperationException();
+                    l.forEach(c);
                 }
             };
         }
