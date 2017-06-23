@@ -32,7 +32,12 @@ public class TraversableTests {
         }
 
         default Traversable<T> filter(final Predicate<T> predicate) {
-            return null;
+            final Traversable<T> self = this;
+            return consumer -> self.forEach(
+                    e -> {
+                        if (predicate.test(e)) consumer.accept(e);
+                    }
+            );
         }
 
         default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
