@@ -310,4 +310,87 @@ public class Mapping {
 
         assertEquals(mappedEmployees, expectedResult);
     }
+
+    @Test
+    public void testTravesableFilter() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> filteredEmployees =
+                Traversable.from(employees)
+                        .filter(e -> e.getPerson().getLastName().equals("White"))
+                        .force();
+
+        final List<Employee> expected =
+                Arrays.asList(
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        assertEquals(expected, filteredEmployees);
+    }
+
+    @Test
+    public void testTraversableFlatMap() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<JobHistoryEntry> filteredEmployees =
+                Traversable.from(employees)
+                        .flatMap(e -> Traversable.from(e.getJobHistory()))
+                        .force();
+
+        final List<JobHistoryEntry> expected =
+                Arrays.asList(
+                        new JobHistoryEntry(2, "dev", "epam"),
+                        new JobHistoryEntry(1, "dev", "google"),
+                        new JobHistoryEntry(3, "qa", "yandex"),
+                        new JobHistoryEntry(1, "qa", "epam"),
+                        new JobHistoryEntry(1, "dev", "abc"),
+                        new JobHistoryEntry(5, "qa", "epam")
+                );
+
+        assertEquals(expected, filteredEmployees);
+    }
 }
