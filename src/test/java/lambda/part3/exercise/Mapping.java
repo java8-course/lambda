@@ -5,16 +5,15 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class Mapping {
 
@@ -168,13 +167,11 @@ public class Mapping {
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper<>(list, list::forEach);
+            return new LazyFlatMapHelper<>(list, Traversable.from(list));
         }
 
         public List<R> force() {
-            List<R> result = new ArrayList<>();
-            traversable.forEach(result::add);
-            return result;
+            return traversable.force();
         }
 
         // TODO filter
@@ -182,32 +179,138 @@ public class Mapping {
 
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         public LazyFlatMapHelper<T, R> filter(Predicate<R> filter) {
-            Traversable<R> newTravers = (c) -> traversable.forEach(t -> {
-                if (filter.test(t)) c.accept(t);
-            });
-            return new LazyFlatMapHelper<>(list, newTravers);
+            return new LazyFlatMapHelper<>(list, traversable.filter(filter));
         }
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
-            return flatMap(listFunction);
-        }
-
-        // (R -> R2) -> (R -> [R2])
-        private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            return (r) -> Collections.singletonList(f.apply(r));
+            return new LazyFlatMapHelper<>(list, traversable.map(f));
         }
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            Traversable<R2> newTravers = (c) -> traversable.forEach(t -> f.apply(t).forEach(c));
-            return new LazyFlatMapHelper<>(list, newTravers);
+            return new LazyFlatMapHelper<>(list, traversable.flatMap(f));
         }
     }
 
     interface Traversable<T> {
         void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            return (c) -> this.forEach(t -> c.accept(f.apply(t)));
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
+            return (c) -> this.forEach(t -> f.apply(t).forEach(c));
+        }
+
+        default Traversable<T> filter(Predicate<T> p) {
+            return (c) -> this.forEach(t -> {
+                if (p.test(t)) c.accept(t);
+            });
+        }
+
+        default List<T> force() {
+            List<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
+        }
+
+        static <T> Traversable<T> from(List<T> l) {
+            return l::forEach;
+        }
+    }
+
+    interface ReachIterable<T> {
+        boolean forNext(Consumer<T> c);
+
+        static <T> ReachIterable<T> from(List<T> l) {
+            final Iterator iterator = l.iterator();
+            return c -> {
+                if (iterator.hasNext()) {
+                    c.accept((T) iterator.next());
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+        }
+
+        default List<T> force() {
+            List<T> result = new ArrayList<T>();
+            while (forNext(result::add)) ;
+            return result;
+        }
+
+        // filter
+        default ReachIterable<T> filter(Predicate<T> p) {
+            final ReachIterable<T> prev = this;
+            return c -> {
+                final boolean[] found = {false};
+                boolean hasNext = true;
+                while (!found[0] && hasNext) {
+                    hasNext = prev.forNext(t -> {
+                        if (p.test(t)) {
+                            c.accept(t);
+                            found[0] = true;
+                        }
+                    });
+                }
+                return hasNext;
+            };
+        }
+
+        // map
+        default <R> ReachIterable<R> map(Function<T, R> f) {
+            final ReachIterable<T> prev = this;
+            return c -> prev.forNext(t -> {
+                c.accept(f.apply(t));
+            });
+        }
+
+        // flatMap
+        default <R> ReachIterable<R> flatMap(Function<T, List<R>> f) {
+            final ReachIterable<T> prev = this;
+            ReachIterable<R>[] newOne = new ReachIterable[1];
+            prev.forNext(t -> {
+                List<R> list = f.apply(t);
+                newOne[0] = ReachIterable.from(list);
+            });
+            return newOne[0];
+        }
+
+        // boolean anyMatch(Predicate<T>)
+        default boolean anyMatch(Predicate<T> p) {
+            final boolean[] found = {false};
+            while (!found[0] &&
+                    forNext(t -> found[0] = p.test(t)));
+            return found[0];
+        }
+
+        // boolean allMatch(Predicate<T>)
+        default boolean allMatch(Predicate<T> p) {
+            final boolean[] allMatch = {true};
+            while (allMatch[0] &&
+                    forNext(t -> allMatch[0] = allMatch[0] && p.test(t)));
+            return allMatch[0];
+        }
+
+        // boolean nonMatch(Predicate<T>)
+        default boolean nonMatch(Predicate<T> p) {
+            return allMatch(p.negate());
+        }
+
+        // Optional<T> firstMatch(Predicate<T>)
+        default Optional<T> firstMatch(Predicate<T> p){
+            Object[] result = new Object[1];
+            final boolean[] found = {false};
+            while (!found[0] &&
+                    forNext(t -> {
+                        found[0] = p.test(t);
+                        if(found[0]) result[0] = t;
+                    }));
+            return Optional.ofNullable((T) result[0]);
+        }
     }
 
     private List<JobHistoryEntry> flatLazyQaToUpperCase(List<JobHistoryEntry> jobHistory) {
@@ -248,10 +351,10 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
-                .map(e -> e.withJobHistory(lazyAddOneYear(e.getJobHistory())))
-                .map(e -> e.withJobHistory(lazyQaToUpperCase(e.getJobHistory())))
-                .force();
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(lazyAddOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(lazyQaToUpperCase(e.getJobHistory())))
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -341,5 +444,40 @@ public class Mapping {
                 );
 
         assertEquals(mappedEmployees, expectedResult);
+    }
+
+
+    @Test
+    public void test() {
+        List<List<Integer>> lists = Arrays.asList(
+                Arrays.asList(1, 2, 3),
+                Arrays.asList(4, 5, 6)
+        );
+
+        System.out.println(LazyFlatMapHelper
+                .from(lists)
+                .flatMap(l -> l)
+                .filter(t -> t % 2 == 0)
+                .map(t -> "ok" + t)
+                .force());
+    }
+
+    @Test
+    public void reach_iter() {
+        List<List<Integer>> lists = Arrays.asList(
+                Arrays.asList(0, 1, 2, 3, 4, 5),
+                Arrays.asList(6, 7, 8, 9, 10));
+
+        ReachIterable<String> r = ReachIterable
+                .from(lists)
+                .flatMap(l -> l)
+                .filter(t -> t % 2 == 0)
+                .map(i -> "ok" + i);
+
+//        assertFalse(r.nonMatch(s -> s.contains("2")));
+//        assertEquals(r.firstMatch(s -> s.contains("2")).get(), "ok2");
+//        assertEquals(r.force(), Arrays.asList("ok2","ok4","ok6","ok8","ok10"));
+        System.out.println(r.force());
+        System.out.println(r.force());
     }
 }
