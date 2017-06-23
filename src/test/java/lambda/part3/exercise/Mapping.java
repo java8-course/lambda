@@ -202,7 +202,6 @@ public class Mapping {
         assertEquals(mappedEmployees, expectedResult);
     }
 
-
     private static class LazyFlatMapHelper<T, R> {
 
         private final List<T> list;
@@ -255,4 +254,6 @@ public class Mapping {
                     });
         }
     }
+
+
 }
