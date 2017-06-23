@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -113,10 +115,9 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> qaToUpperCase(List<JobHistoryEntry> jobHistoryList){
-        return new MapHelper<>(jobHistoryList).map(jh -> {
-            return (jh.getPosition().equals("qa") ? jh.withPosition("QA") : jh);
-        }
-        ).getList();
+        return new MapHelper<>(jobHistoryList)
+                .map(jh -> jh.getPosition().equals("qa") ? jh.withPosition("QA") : jh)
+                .getList();
 
     }
 
@@ -147,17 +148,56 @@ public class Mapping {
 
     }
 
+    interface Traversable<T> {
+
+        void forEach(Consumer<T> c);
+        //force(tolist), flatmap, static from;
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default <R> Traversable <R> flatMap(Function<T, Traversable<R>> mapper){
+
+            return consumer -> this.forEach(t -> mapper.apply(t).forEach(consumer));
+
+        }
+
+        default Traversable<T> filter(Predicate<T> predicate){
+            return consumer -> this.forEach(item -> {
+                if (predicate.test(item)) consumer.accept(item);
+            });
+        }
+
+        default Traversable <T> from(List<T> list){
+            return list::forEach;
+        }
+    }
+
     private static class LazyFlatMapHelper<T, R> {
 
-        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+        private final List<T> list;
+        private final Function<T, List<R>> function;
+
+        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function){
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            throw new UnsupportedOperationException();
+            return new MapHelper<>(list).flatMap(function).getList();
+
         }
 
         // TODO filter
@@ -175,13 +215,15 @@ public class Mapping {
             throw new UnsupportedOperationException();
         }
 
-        // TODO *
+
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+            Function<T, List<R2>> listFunction =
+                    t -> new MapHelper<>(function.apply(t)).flatMap(f).getList();
+            return new LazyFlatMapHelper<>(list, listFunction);
         }
+
+
     }
-
-
 
     @Test
     public void lazy_mapping() {
