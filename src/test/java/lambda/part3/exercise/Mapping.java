@@ -168,9 +168,7 @@ public class Mapping {
                                 Collections.singletonList(
                                         new JobHistoryEntry(5, "qa", "epam")
                                 ))
-                );
-
-        final List<Employee> mappedEmployees =
+                );        final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
                         .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                         .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))

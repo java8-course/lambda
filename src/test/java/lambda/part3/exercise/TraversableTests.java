@@ -44,7 +44,10 @@ public class TraversableTests {
         }
 
         default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
-            return null;
+            final Traversable<T> self = this;
+            return consumer ->
+                    self.forEach(
+                            element -> function.apply(element).forEach(consumer));
         }
 
         default List<T> toList() {
@@ -179,5 +182,25 @@ public class TraversableTests {
                     return currentPosition.equals("qa") ? job.withPosition("QA") : job;
                 })
                 .toList();
+    }
+
+    @Test
+    public void testThatMethodFlatMapWorksCorrect() {
+        final List<JobHistoryEntry> jobs =
+                Traversable.from(employees)
+                        .flatMap(employee -> Traversable.from(employee.getJobHistory()))
+                        .toList();
+
+        final List<JobHistoryEntry> expectedResult =
+                Arrays.asList(
+                        new JobHistoryEntry(2, "dev", "epam"),
+                        new JobHistoryEntry(1, "dev", "google"),
+                        new JobHistoryEntry(3, "qa", "yandex"),
+                        new JobHistoryEntry(1, "qa", "epam"),
+                        new JobHistoryEntry(1, "dev", "abc"),
+                        new JobHistoryEntry(5, "qa", "epam")
+                );
+
+        assertEquals(jobs, expectedResult);
     }
 }
