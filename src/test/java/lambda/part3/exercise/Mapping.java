@@ -360,12 +360,18 @@ public class Mapping {
 
     interface ReachIterable<T> {
 
+        void resetIteration();
         boolean forNext(Consumer<T> c);
 
         default ReachIterable<T> filter(Predicate<T> p) {
             ReachIterable<T> self = this;
 
             return new ReachIterable<T>() {
+                @Override
+                public void resetIteration() {
+                    self.resetIteration();
+                }
+
                 @Override
                 public boolean forNext(Consumer<T> c) {
                     return self.forNext(t -> {
@@ -382,6 +388,11 @@ public class Mapping {
 
             return new ReachIterable<R>() {
                 @Override
+                public void resetIteration() {
+                    self.resetIteration();
+                }
+
+                @Override
                 public boolean forNext(Consumer<R> c) {
                     return self.forNext(t ->
                             c.accept(f.apply(t))
@@ -394,6 +405,11 @@ public class Mapping {
             ReachIterable<T> self = this;
 
             return new ReachIterable<R>() {
+                @Override
+                public void resetIteration() {
+                    self.resetIteration();
+                }
+
                 @Override
                 public boolean forNext(Consumer<R> c) {
                     return self.forNext(t ->
@@ -414,6 +430,7 @@ public class Mapping {
                 });
             }
 
+            resetIteration();
             return found[0];
         }
 
@@ -428,6 +445,7 @@ public class Mapping {
                 });
             }
 
+            resetIteration();
             return isAllMatch[0];
         }
 
@@ -446,6 +464,7 @@ public class Mapping {
                 });
             }
 
+            resetIteration();
             return isNonMatch[0];
         }
 
@@ -462,6 +481,7 @@ public class Mapping {
                 });
             }
 
+            resetIteration();
             return Optional.ofNullable((T) object[0]);
         }
 
@@ -474,13 +494,20 @@ public class Mapping {
 
         static <T> ReachIterable<T> from(List<T> l) {
             return new ReachIterable<T>() {
-                int i = 0;
+
+                ListIterator<T> listIterator = l.listIterator();
+
+                @Override
+                public void resetIteration() {
+                    while (listIterator.hasPrevious()) {
+                        listIterator.previous();
+                    }
+                }
 
                 @Override
                 public boolean forNext(Consumer<T> c) {
-                    if (i < l.size()) {
-                        c.accept(l.get(i));
-                        i++;
+                    if (listIterator.hasNext()) {
+                        c.accept(listIterator.next());
                         return true;
                     }
                     return false;
@@ -573,6 +600,80 @@ public class Mapping {
                 .firstMatch(s -> s.length() > 1);
 
         assertFalse(optional.isPresent());
+    }
+
+    @Test
+    public void testReachIterableConsistencyOnSecondIterationOfAnyMatchMethod() {
+
+        ReachIterable<Integer> reachIterable = ReachIterable.from(Arrays.asList(1, 2, 3, 4, 5));
+
+        assertTrue(reachIterable
+                .anyMatch(i -> i == 3));
+        assertTrue(reachIterable
+                .anyMatch(i -> i == 3));
+        assertFalse(reachIterable
+                .anyMatch(i -> i == 6));
+        assertFalse(reachIterable
+                .anyMatch(i -> i == 6));
+
+    }
+
+    @Test
+    public void testReachIterableConsistencyOnSecondIterationOfAllMatchMethod() {
+
+        ReachIterable<Integer> reachIterable1 = ReachIterable.from(Arrays.asList(2, 2, 2, 2, 2));
+
+        assertTrue(reachIterable1
+                .allMatch(i -> i == 2));
+        assertTrue(reachIterable1
+                .allMatch(i -> i == 2));
+        assertFalse(reachIterable1
+                .allMatch(i -> i == 3));
+        assertFalse(reachIterable1
+                .allMatch(i -> i == 3));
+    }
+
+    @Test
+    public void testReachIterableConsistencyOnSecondIterationOfNonMatchMethod() {
+
+        ReachIterable<Integer> reachIterable2 = ReachIterable.from(Arrays.asList(2, 2, 2, 2, 2));
+
+        assertTrue(reachIterable2
+                .nonMatch(i -> i == 1));
+        assertTrue(reachIterable2
+                .nonMatch(i -> i == 1));
+        assertFalse(reachIterable2
+                .nonMatch(i -> i == 2));
+        assertFalse(reachIterable2
+                .nonMatch(i -> i == 2));
+    }
+
+    @Test
+    public void testReachIterableConsistencyOnSecondIterationOfFirstMatchMethod() {
+
+        ReachIterable<String> reachIterable3 = ReachIterable.from(Arrays.asList("a", "b", "c", "dd", "ee"));
+
+        assertEquals("dd",
+                reachIterable3
+                        .firstMatch(s -> s.length() > 1)
+                        .orElseThrow(AssertionError::new)
+        );
+
+        assertEquals("dd",
+                reachIterable3
+                        .firstMatch(s -> s.length() > 1)
+                        .orElseThrow(AssertionError::new)
+        );
+
+        assertFalse(reachIterable3
+                .firstMatch(s -> s.length() > 3)
+                .isPresent()
+        );
+
+        assertFalse(reachIterable3
+                .firstMatch(s -> s.length() > 3)
+                .isPresent()
+        );
     }
 
 }
