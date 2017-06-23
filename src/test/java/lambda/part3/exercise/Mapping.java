@@ -6,7 +6,9 @@ import data.Person;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.assertEquals;
 
@@ -38,7 +40,7 @@ public class Mapping {
         // map: [T, T, T], T -> [R] => [[], [R1, R2], [R3, R4, R5]]
         // flatMap: [T, T, T], T -> [R] => [R1, R2, R3, R4, R5]
         public <R> MapHelper<R> flatMap(Function<T, List<R>> f) {
-            final List<R> result = new ArrayList<R>();
+            final List<R> result = new ArrayList<>();
             list.forEach((T t) ->
                     f.apply(t).forEach(result::add)
             );
@@ -156,18 +158,21 @@ public class Mapping {
         List<T> list;
         Function<T, List<R>> function;
 
-        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> func) {
             this.list = list;
-            this.function = function;
+            this.function = func;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper(list, Function.identity());
+            return new LazyFlatMapHelper(list, Collections::singletonList);
         }
 
         public List<R> force() {
             // TODO
-            throw new UnsupportedOperationException();
+            List<R> result = new ArrayList<>();
+            list.forEach(t -> function.apply(t).forEach(result::add));
+            return result;
+
         }
 
         // TODO filter
@@ -176,21 +181,111 @@ public class Mapping {
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
-            return flatMap(listFunction);
-        }
-
-        // (R -> R2) -> (R -> [R2])
-        private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+            Function<R, List<R2>> listFunc = f.andThen((R2 r) -> {
+                ArrayList<R2> arrList = new ArrayList<>();
+                arrList.add(r);
+                return arrList;
+            });
+            return flatMap(listFunc);
         }
 
         // TODO *
-        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+        public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> func) {
+            Function<T, List<R2>> listFunc = t -> new MapHelper<>(function.apply(t)).flatMap(func).getList();
+            return new LazyFlatMapHelper<>(list, listFunc);
         }
     }
 
+
+    interface Traversable<T> {
+        void forEach(Consumer<T> consumer);
+
+        default <R> Traversable<R> map(Function<T, R> func) {
+            Traversable<T> self = this;
+            Traversable<R> newTravers = new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> consumer) {
+                    self.forEach(t -> consumer.accept(func.apply(t)));
+                }
+            };
+            return newTravers;
+        }
+
+        default <R> Traversable<R> flatmap(Function<T, List<R>> f) {
+            Traversable<T> self = this;
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> consumer) {
+                    self.forEach((T t) -> f.apply(t).forEach(p -> consumer.accept(p)));
+                }
+            };
+        }
+
+        default <R> List<R> force() {
+            List<R> result = new ArrayList<>();
+            if (this.getClass().isInstance(this.map(q -> q)) || this.getClass().isInstance(this.flatmap(Collections::singletonList))
+             || this.getClass().isInstance(this.filter(p->true)))
+                forEach((T t) -> result.add(((R) t)));
+            else
+                throw new UnsupportedOperationException("None of operations were applied to the origin collection");
+            return result;
+        }
+
+        default <R> Traversable<R> filter(Predicate<R> condition) {
+            Traversable<T> self = this;
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> consumer) {
+                    self.forEach((T t) -> {
+                        if (condition.test((R) t))
+                            consumer.accept((R) t);
+                    });
+                }
+            };
+        }
+
+        static <T> Traversable<T> from(List<T> list) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> consumer) {
+                    list.forEach(consumer::accept);
+                }
+            };
+        }
+    }
+
+    @Test
+    public void testTraversableMap() {
+        final List<Integer> list = Arrays.asList(5, 3, 2);
+        Traversable<Integer> tr = Traversable.from(list);
+
+        List<String> lMap = tr.map(t -> String.valueOf(t * 2)).force();
+        assertEquals(new ArrayList<>(Arrays.asList("10", "6", "4")), lMap);
+    }
+
+    @Test
+    public void testTraversableFlatMap() {
+        final List<Integer> list = Arrays.asList(5, 3, 2);
+        Traversable<Integer> tr = Traversable.from(list);
+
+        List<String> lFlatMap = tr.flatmap(t -> {
+            List<String> temp = new ArrayList<>();
+            if (t == 5)
+                temp.addAll(Arrays.asList(String.valueOf(t * 2), String.valueOf(t - 3)));
+            return temp;
+        }).force();
+
+        assertEquals(new ArrayList<>(Arrays.asList("10", "2")), lFlatMap);
+    }
+
+    @Test
+    public void testTraversableFilter() {
+        final List<Integer> list = Arrays.asList(5, 3, 2);
+        Traversable<Integer> tr = Traversable.from(list);
+
+        List<String> lMap = tr.map(t -> String.valueOf(t * 2)).filter(f -> f.equals("10")).force();
+        assertEquals(new ArrayList<>(Arrays.asList("10")), lMap);
+    }
 
     @Test
     public void lazy_mapping() {
