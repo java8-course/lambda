@@ -202,7 +202,6 @@ public class Mapping {
         assertEquals(mappedEmployees, expectedResult);
     }
 
-
     private static class LazyFlatMapHelper<T, R> {
 
         private final List<T> list;
@@ -225,9 +224,9 @@ public class Mapping {
             return result;
         }
 
-        public LazyFlatMapHelper<T, R> filter (Predicate<T> predicate){
+        public LazyFlatMapHelper<T, R> filter(Predicate<T> predicate) {
             return new LazyFlatMapHelper<>(
-                list,
+                    list,
                     element -> predicate.test(element) ?
                             function.apply(element) :
                             Collections.emptyList()
@@ -244,7 +243,6 @@ public class Mapping {
             return element -> Collections.singletonList(mapper.apply(element));
         }
 
-        // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
             return new LazyFlatMapHelper<>(
                     list,
@@ -253,6 +251,43 @@ public class Mapping {
                         function.apply(element).forEach(result -> results.addAll(f.apply(result)));
                         return results;
                     });
+        }
+    }
+
+    private interface Traversable<T> {
+        void forEach(Consumer<T> consumer);
+
+        static <T> Traversable<T> from(final List<T> list) {
+            return list::forEach;
+        }
+
+        default Traversable<T> filter(final Predicate<T> predicate) {
+            final Traversable<T> self = this;
+            return consumer -> self.forEach(
+                    element -> {
+                        if (predicate.test(element)) consumer.accept(element);
+                    }
+            );
+        }
+
+        default <R> Traversable<R> map(final Function<T, R> mapper) {
+            final Traversable<T> self = this;
+            return consumer -> self.forEach(
+                    element -> consumer.accept(mapper.apply(element))
+            );
+        }
+
+        default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
+            final Traversable<T> self = this;
+            return consumer -> self.forEach(
+                    collection -> function.apply(collection).forEach(consumer)
+            );
+        }
+
+        default List<T> force() {
+            final List<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
         }
     }
 }
