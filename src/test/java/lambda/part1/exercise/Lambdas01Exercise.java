@@ -42,6 +42,7 @@ public class Lambdas01Exercise {
 
         // TODO use FluentIterable
 
-        assertEquals(person, new Person("name 1", "lastName 2", 30));
+
+        assertEquals(new Person("name 1", "lastName 2", 30), personOptional.get());
     }
 }
