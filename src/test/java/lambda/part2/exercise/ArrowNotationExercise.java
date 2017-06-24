@@ -23,7 +23,7 @@ public class ArrowNotationExercise {
     public void compareAges() {
         // TODO use BiPredicate
         // compareAges: (Person, Person) -> boolean
-        final BiPredicate<Person, Person> compareAges = (p1, p2) -> (p1.getAge() == p2.getAge()) ? true : false;
+        final BiPredicate<Person, Person> compareAges = (p1, p2) -> p1.getAge() == p2.getAge();
 
 //        throw new UnsupportedOperationException("Not implemented");
         assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
