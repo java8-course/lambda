@@ -15,10 +15,10 @@ public class TraversableMapping {
 
         void forEach(Consumer<T> c);
 
-        default <R> lambda.part3.exercise.Mapping.Traversable<R> map(Function<T, R> f) {
+        default <R> lambda.part3.exercise.TraversableMapping.Traversable<R> map(Function<T, R> f) {
             lambda.part3.exercise.TraversableMapping.Traversable<T> self = this;
 
-            return new lambda.part3.exercise.Mapping.Traversable<R>() {
+            return new Traversable<R>() {
                 @Override
                 public void forEach(Consumer<R> c) {
                     self.forEach(t -> c.accept(f.apply(t)));
@@ -26,13 +26,13 @@ public class TraversableMapping {
             };
         }
 
-        default <R> lambda.part3.exercise.Mapping.Traversable<R> flatMap(Function<T, lambda.part3.exercise.Mapping.Traversable<R>> mapper){
+        default <R> lambda.part3.exercise.TraversableMapping.Traversable<R> flatMap(Function<T, Traversable<R>> mapper){
 
             return consumer -> this.forEach(t -> mapper.apply(t).forEach(consumer));
 
         }
 
-        default lambda.part3.exercise.Mapping.Traversable<T> filter(Predicate<T> predicate){
+        default lambda.part3.exercise.TraversableMapping.Traversable<T> filter(Predicate<T> predicate){
             return consumer -> this.forEach(item -> {
                 if (predicate.test(item)) consumer.accept(item);
             });
@@ -44,7 +44,7 @@ public class TraversableMapping {
         }
 
 
-        static <T> lambda.part3.exercise.Mapping.Traversable<T> from (List<T> list){
+        static <T> lambda.part3.exercise.TraversableMapping.Traversable<T> from (List<T> list){
             return list::forEach;
         }
     }
