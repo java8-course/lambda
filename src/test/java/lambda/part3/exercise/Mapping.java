@@ -251,7 +251,7 @@ public class Mapping {
             return new Traversable<T>() {
                 @Override
                 public void forEach(Consumer<T> c) {
-                    l.forEach(t -> c.accept(t));
+                    l.forEach(c);
                 }
             };
         }
