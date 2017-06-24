@@ -205,52 +205,31 @@ public class Mapping {
     private static class LazyFlatMapHelper<T, R> {
 
         private final List<T> list;
-        private Function<T, List<R>> function;
+        private Traversable<R> traversable;
 
-        public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+        private LazyFlatMapHelper(List<T> list, Traversable<R> traversable) {
             this.list = list;
-            this.function = function;
+            this.traversable = traversable;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper<>(list, Arrays::asList);
+            return new LazyFlatMapHelper<>(list, Traversable.from(list));
         }
 
         public List<R> force() {
-            List<R> result = new ArrayList<>();
-            for (T element : list) {
-                result.addAll(function.apply(element));
-            }
-            return result;
+            return traversable.force();
         }
 
-        public LazyFlatMapHelper<T, R> filter(Predicate<T> predicate) {
-            return new LazyFlatMapHelper<>(
-                    list,
-                    element -> predicate.test(element) ?
-                            function.apply(element) :
-                            Collections.emptyList()
-            );
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> predicate) {
+            return new LazyFlatMapHelper<>(list, traversable.filter(predicate));
         }
 
-        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
-            return flatMap(listFunction);
-        }
-
-        // (R -> R2) -> (R -> [R2])
-        private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> mapper) {
-            return element -> Collections.singletonList(mapper.apply(element));
+        public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> mapper) {
+            return new LazyFlatMapHelper<>(list, traversable.map(mapper));
         }
 
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            return new LazyFlatMapHelper<>(
-                    list,
-                    element -> {
-                        List<R2> results = new ArrayList<>();
-                        function.apply(element).forEach(result -> results.addAll(f.apply(result)));
-                        return results;
-                    });
+            return new LazyFlatMapHelper<>(list, traversable.flatMap(f));
         }
     }
 
@@ -277,7 +256,7 @@ public class Mapping {
             );
         }
 
-        default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
+        default <R> Traversable<R> flatMap(final Function<T, List<R>> function) {
             final Traversable<T> self = this;
             return consumer -> self.forEach(
                     collection -> function.apply(collection).forEach(consumer)
@@ -289,5 +268,66 @@ public class Mapping {
             forEach(result::add);
             return result;
         }
+    }
+
+    @Test
+    public void testLazyFlatMapHelperMethodFilter() {
+        final List<String> strings = Arrays.asList(
+                "aaa",
+                "abc",
+                "",
+                "bcd",
+                "",
+                "lambda"
+        );
+
+        final List<Integer> actual = LazyFlatMapHelper.from(strings)
+                .map(element -> element.length())
+                .filter(element -> element > 0)
+                .force();
+
+        final List<Integer> expected = Arrays.asList(3, 3, 3, 6);
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testLazyFlatMapHelperMethodFlatMap() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<JobHistoryEntry> actual = LazyFlatMapHelper.from(employees)
+                .flatMap(employee -> employee.getJobHistory())
+                .force();
+
+        final List<JobHistoryEntry> expected = Arrays.asList(
+                new JobHistoryEntry(2, "dev", "epam"),
+                new JobHistoryEntry(1, "dev", "google"),
+                new JobHistoryEntry(3, "qa", "yandex"),
+                new JobHistoryEntry(1, "qa", "epam"),
+                new JobHistoryEntry(1, "dev", "abc"),
+                new JobHistoryEntry(5, "qa", "epam")
+        );
+
+        assertEquals(expected, actual);
     }
 }
