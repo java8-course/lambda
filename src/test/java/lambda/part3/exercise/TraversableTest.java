@@ -37,7 +37,7 @@ public class TraversableTest {
             );
         }
 
-        default <R> Traversable<R> flatMap(final Function<T, Traversable<R>> function) {
+        default <R> Traversable<R> flatMap(final Function<T, List<R>> function) {
             return consumer -> this.forEach(
                     element -> function.apply(element).forEach(consumer)
             );
@@ -93,13 +93,6 @@ public class TraversableTest {
 
     @Test
     public void mapTest() {
-        final List<Employee> actual =
-                Traversable.from(employees)
-                           .map(employee -> employee.withPerson(employee.getPerson().withFirstName("John")))
-                           .map(employee -> employee.withJobHistory(addOneYear(employee.getJobHistory())))
-                           .map(employee -> employee.withJobHistory(fixed(employee.getJobHistory())))
-                           .toList();
-
         final List<Employee> expected = Arrays.asList(
                 new Employee(
                         new Person("John", "Galt", 30),
@@ -122,15 +115,18 @@ public class TraversableTest {
                 )
         );
 
+        final List<Employee> actual =
+                Traversable.from(employees)
+                           .map(employee -> employee.withPerson(employee.getPerson().withFirstName("John")))
+                           .map(employee -> employee.withJobHistory(addOneYear(employee.getJobHistory())))
+                           .map(employee -> employee.withJobHistory(fixed(employee.getJobHistory())))
+                           .toList();
+
         assertEquals(expected, actual);
     }
 
     @Test
     public void filterTest() {
-        final List<Employee> actual = Traversable.from(employees)
-                                                 .filter(employee -> "Galt".equals(employee.getPerson().getLastName()))
-                                                 .toList();
-
         final List<Employee> expected = Collections.singletonList(
                 new Employee(
                         new Person("a", "Galt", 30),
@@ -141,14 +137,20 @@ public class TraversableTest {
                 )
         );
 
+        final List<Employee> actual =
+                Traversable.from(employees)
+                           .filter(employee -> "Galt".equals(employee.getPerson().getLastName()))
+                           .toList();
+
         assertEquals(expected, actual);
     }
 
     @Test
     public void flatMapTest() {
-        final List<JobHistoryEntry> actual = Traversable.from(employees)
-                                                 .flatMap(employee -> Traversable.from(employee.getJobHistory()))
-                                                 .toList();
+        final List<JobHistoryEntry> actual =
+                Traversable.from(employees)
+                           .flatMap(Employee::getJobHistory)
+                           .toList();
 
         final List<JobHistoryEntry> expected = Arrays.asList(
                 new JobHistoryEntry(2, "dev", "epam"),
