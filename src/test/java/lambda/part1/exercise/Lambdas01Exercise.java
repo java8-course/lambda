@@ -1,15 +1,15 @@
 package lambda.part1.exercise;
 
-import com.google.common.collect.ImmutableList;
-import data.Person;
-import org.junit.Test;
+        import com.google.common.collect.ImmutableList;
+        import data.Person;
+        import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+        import java.util.Arrays;
+        import java.util.Comparator;
+        import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+        import static org.junit.Assert.assertArrayEquals;
+        import static org.junit.Assert.assertEquals;
 
 public class Lambdas01Exercise {
 
