@@ -23,13 +23,7 @@ public class ArrowNotationExercise {
     public void compareAges() {
         // TODO use BiPredicate
         // compareAges: (Person, Person) -> boolean
-        final BiPredicate<Person, Person> compareAges = (p1, p2) -> {
-            if (Integer.compare(p1.getAge(), p2.getAge()) == 0) {
-                return true;
-            } else {
-                return false;
-            }
-        };
+        final BiPredicate<Person, Person> compareAges = (p1, p2) -> (p1.getAge() == p2.getAge()) ? true : false;
 
 //        throw new UnsupportedOperationException("Not implemented");
         assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
@@ -49,11 +43,7 @@ public class ArrowNotationExercise {
         return (p1, p2) -> {
             int p1FullNameLength = getProperty.apply(p1).length();
             int p2FullNameLength = getProperty.apply(p2).length();
-            if (Integer.compare(p1FullNameLength, p2FullNameLength) > 0) {
-                return p1.getAge();
-            } else {
-                return p2.getAge();
-            }
+            return (p1FullNameLength > p2FullNameLength) ? p1.getAge() : p2.getAge();
         };
     }
 
