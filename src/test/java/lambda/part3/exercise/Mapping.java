@@ -227,6 +227,30 @@ public class Mapping {
             };
         }
 
+        default <R> Traversable<R> flatMap(Function<T, Traversable<R>> f) {
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    this.forEach(t -> f.apply((T) t).forEach(c));
+                }
+            };
+        }
+
+        default Traversable<T> filter(Predicate<T> p) {
+
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    this.forEach(t -> {
+                        if (p.test(t)) {
+                            c.accept(t);
+                        }
+                    });
+                }
+            };
+        }
+
         static <T> Traversable<T> from(List<T> l) {
             return new Traversable<T>() {
                 @Override
@@ -235,9 +259,16 @@ public class Mapping {
                 }
             };
         }
+
+        default List<T> force() {
+            final List<T> res = new ArrayList<>();
+            this.forEach(res::add);
+            return res;
+        }
     }
 
-    interface ReachIterable<T> {
+
+    interface RichIterable<T> {
         boolean hasNext();
 
         T next();
@@ -250,6 +281,8 @@ public class Mapping {
         // allMatch
         //nonMatch
     }
+
+    ;
 
     @Test
     public void lazy_mapping() {
