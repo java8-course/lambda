@@ -111,9 +111,10 @@ public class Mapping {
 
     private List<JobHistoryEntry> fixQAPosition(List<JobHistoryEntry> jobHistory) {
         return new MapHelper<JobHistoryEntry>(jobHistory)
-                .map(j -> j.withPosition(j.
-                        getPosition().
-                        replace("qa", "QA"))).getList();
+                .map(j ->
+                        j.getPosition().equals("qa") ?
+                                j.withPosition("QA") :
+                                j.withPosition(j.getPosition())).getList();
     }
 
     private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
