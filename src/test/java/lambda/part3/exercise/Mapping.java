@@ -33,7 +33,12 @@ public class Mapping {
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
             // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<R>();
+            list.forEach((T t) ->
+                    result.add(f.apply(t))
+            );
+            return new MapHelper<R>(result);
+            //throw new UnsupportedOperationException();
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -48,6 +53,20 @@ public class Mapping {
 
             return new MapHelper<R>(result);
         }
+    }
+
+
+    public static List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jhe) {
+              return new MapHelper<JobHistoryEntry>(jhe)
+                .map(e -> e.withDuration(e.getDuration() + 1))
+                .getList();
+    }
+
+    public static List<JobHistoryEntry> replace(List<JobHistoryEntry> jhe) {
+                return new MapHelper<JobHistoryEntry>(jhe)
+                .map(e -> e.withPosition(e.getPosition()
+                .replace("qa", "QA")))
+                .getList();
     }
 
     @Test
@@ -76,12 +95,15 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
-                /*
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(replace(e.getJobHistory())))
+                        /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
