@@ -204,16 +204,14 @@ public class Mapping {
 
     private static class LazyFlatMapHelper<T, R> {
 
-        private final List<T> list;
         private Traversable<R> traversable;
 
-        private LazyFlatMapHelper(List<T> list, Traversable<R> traversable) {
-            this.list = list;
+        private LazyFlatMapHelper(Traversable<R> traversable) {
             this.traversable = traversable;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            return new LazyFlatMapHelper<>(list, Traversable.from(list));
+            return new LazyFlatMapHelper<>(Traversable.from(list));
         }
 
         public List<R> force() {
@@ -221,15 +219,15 @@ public class Mapping {
         }
 
         public LazyFlatMapHelper<T, R> filter(Predicate<R> predicate) {
-            return new LazyFlatMapHelper<>(list, traversable.filter(predicate));
+            return new LazyFlatMapHelper<>(traversable.filter(predicate));
         }
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> mapper) {
-            return new LazyFlatMapHelper<>(list, traversable.map(mapper));
+            return new LazyFlatMapHelper<>(traversable.map(mapper));
         }
 
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            return new LazyFlatMapHelper<>(list, traversable.flatMap(f));
+            return new LazyFlatMapHelper<>(traversable.flatMap(f));
         }
     }
 
