@@ -150,6 +150,57 @@ public class Mapping {
 
     }
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f){
+            Traversable<T> self = this;
+
+            return new Traversable<R>(){
+                @Override
+                public void forEach(Consumer<R> c){
+                    self.forEach(t -> c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default <R> Traversable <R> flatMap(Function<T, Traversable<R>> mapper){
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(e -> mapper.apply(e).forEach(c));
+                }
+            };
+
+        }
+
+        default Traversable<T> filter(Predicate<T> p){
+            Traversable<T> self = this;
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(e -> {
+                        if (p.test(e)) {
+                            c.accept(e);
+                        }
+                    });
+                }
+            };
+        }
+
+        default Traversable<T> from(List<T> list){
+            return list::forEach;
+        }
+
+        default List<T> force(){
+            final List<T> result = new ArrayList<T>();
+            this.forEach(result::add);
+            return result;
+        }
+    }
+
     private static class LazyFlatMapHelper<T, R> {
 
         private final List<T> list;
@@ -168,7 +219,6 @@ public class Mapping {
             return new MapHelper<>(list).flatMap(function).getList();
         }
 
-        // TODO filter
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
