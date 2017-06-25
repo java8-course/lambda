@@ -257,7 +257,7 @@ public class Mapping {
         default <R> Traversable<R> flatMap(final Function<T, List<R>> function) {
             final Traversable<T> self = this;
             return consumer -> self.forEach(
-                    collection -> function.apply(collection).forEach(consumer)
+                    element -> function.apply(element).forEach(consumer)
             );
         }
 
