@@ -161,18 +161,77 @@ public class Mapping {
 
     }
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t ->
+                            c.accept(f.apply(t)));
+                }
+            };
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t ->
+                            f.apply(t).forEach(c));
+                }
+            };
+        }
+
+        default <R> Traversable<R> filter(Predicate<T> p) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(e -> {
+                        if (p.test(e))
+                            c.accept(e);
+                            }
+                    );
+                }
+            };
+        }
+
+        default List<T> force() {
+            final List<T> result = new ArrayList<>();
+
+            this.forEach(result::add);
+
+            return result;
+        }
+
+        static <T> Traversable<T> from(List<T> list) {
+            return c -> list.forEach(c);
+        }
+    }
+
     private static class LazyFlatMapHelper<T, R> {
 
+        private final List<T> list;
+        private final Function<T, List<R>> function;
+
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            return new MapHelper<T>(list).flatMap(function).getList();
         }
 
         // TODO filter
@@ -181,18 +240,19 @@ public class Mapping {
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
-            final Function<R, List<R2>> listFunction = rR2TorListR2(f);
+            final Function<R, List<R2>> listFunction = f.andThen(Collections::singletonList);
             return flatMap(listFunction);
         }
 
-        // (R -> R2) -> (R -> [R2])
-        private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+        public LazyFlatMapHelper<T, R> filter(Predicate<R> p) {
+            return flatMap(r -> p.test(r) ? Collections.singletonList(r) : Collections.emptyList());
         }
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+            Function<T, List<R2>> listFunction =
+                    t -> new MapHelper<R>(function.apply(t)).flatMap(f).getList();
+            return new LazyFlatMapHelper<>(list, listFunction);
         }
     }
 
