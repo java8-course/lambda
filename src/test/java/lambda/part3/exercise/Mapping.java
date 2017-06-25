@@ -277,12 +277,12 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 LazyMapHelper.from(employees)
-                /*
-                .map(TODO) // change name to John
-                .map(TODO) // add 1 year to experience duration
-                .map(TODO) // replace qa with QA
-                * */
-                .force();
+
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
+                        .map(e -> e.withJobHistory(lazyAddOneYear((e.getJobHistory()))))
+                        .map(e -> e.withJobHistory(lazyReplaceQA(e.getJobHistory())))
+                        .force();
+
 
         final List<Employee> expectedResult =
                 Arrays.asList(
