@@ -407,12 +407,11 @@ public class Mapping {
                 @Override
                 public boolean forNext(Consumer<R> c) {
                     boolean result = currentIterable.forNext(c);
+                    boolean isNotEnd = true;
 
-                    if (!result) {
-                        boolean isNotEnd = self.forNext(getNewIterable);
-                        if (isNotEnd) {
-                            result = currentIterable.forNext(c);
-                        }
+                    while (!result && isNotEnd) {
+                        isNotEnd = self.forNext(getNewIterable);
+                        result = currentIterable.forNext(c);
                     }
 
                     return result;
@@ -484,8 +483,26 @@ public class Mapping {
 
     }
 
+
     @Test
-    public void testReachIterableMethodFilter() {
+    public void testReachIterableMethodForNext() {
+        List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
+        List<Integer> actual = new ArrayList<>();
+
+        ReachIterable<Integer> reachIterable = ReachIterable.from(dataList);
+
+        assertTrue(reachIterable.forNext(actual::add));
+        assertTrue(reachIterable.forNext(i -> {}));
+        assertTrue(reachIterable.forNext(actual::add));
+        assertTrue(reachIterable.forNext(actual::add));
+        assertTrue(reachIterable.forNext(actual::add));
+        assertFalse(reachIterable.forNext(t -> {}));
+
+        assertEquals(Arrays.asList(1, 3, 4, 5), actual);
+    }
+
+    @Test
+    public void testReachIterableFilter() {
         List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
 
         assertEquals(
@@ -495,7 +512,7 @@ public class Mapping {
     }
 
     @Test
-    public void testReachIterableMethodFlatMap() {
+    public void testReachIterableFlatMap() {
         List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
 
         assertEquals(
@@ -505,7 +522,26 @@ public class Mapping {
     }
 
     @Test
-    public void testReachIterableMethodMap() {
+    public void testReachIterableFlatMapThatFlattensSomeOfTheObjsToEmptyLists() {
+        List<String> dataList = Arrays.asList("", "", "", "a", "", "", "");
+        List<Character> expected = Collections.singletonList('a');
+        List<Character> actual =
+                ReachIterable.from(dataList)
+                        .flatMap(this::getCharsList)
+                        .force();
+
+        assertEquals(expected, actual);
+    }
+
+    private List<Character> getCharsList(String s) {
+        List<Character> result = new ArrayList<>();
+        for (int i = 0; i < s.length(); i++)
+            result.add(s.charAt(i));
+        return result;
+    }
+
+    @Test
+    public void testReachIterableMap() {
         List<Integer> dataList = Arrays.asList(1, 2, 3, 4, 5);
 
         assertEquals(
@@ -515,7 +551,7 @@ public class Mapping {
     }
 
     @Test
-    public void testReachIterableMethodAnyMatch() {
+    public void testReachIterableAnyMatch() {
         assertTrue(ReachIterable.from(Arrays.asList(1, 2, 3, 4, 5))
                 .anyMatch(i -> i == 3));
 
@@ -527,7 +563,7 @@ public class Mapping {
     }
 
     @Test
-    public void testReachIterableMethodAllMatch() {
+    public void testReachIterableAllMatch() {
         assertTrue(ReachIterable.from(Arrays.asList(1, 1, 1, 1, 1))
                 .allMatch(i -> i == 1));
 
@@ -539,7 +575,7 @@ public class Mapping {
     }
 
     @Test
-    public void testReachIterableMethodNonMatch() {
+    public void testReachIterableNonMatch() {
         assertTrue(ReachIterable.from(Arrays.asList(2, 2, 2, 2, 2))
                 .nonMatch(i -> i == 1));
 
@@ -569,4 +605,43 @@ public class Mapping {
         assertFalse(optional.isPresent());
     }
 
+    @Test
+    public void testReachIterableMethodsOnEmptyList() {
+        List<String> dataList = Collections.emptyList();
+        List<Character> expected = Collections.emptyList();
+
+        assertEquals(expected,
+                ReachIterable.from(dataList)
+                        .filter(s -> true)
+                        .force());
+
+        assertEquals(expected,
+                ReachIterable.from(dataList)
+                        .map(s -> s)
+                        .force());
+
+        assertEquals(expected,
+                ReachIterable.from(dataList)
+                        .flatMap(this::getCharsList)
+                        .force());
+
+        assertTrue(ReachIterable.from(dataList).allMatch(s -> true));
+        assertFalse(ReachIterable.from(dataList).anyMatch(s -> true));
+        assertTrue(ReachIterable.from(dataList).nonMatch(s -> true));
+        assertFalse(ReachIterable.from(dataList).firstMatch(s -> true).isPresent());
+    }
+
+    @Test
+    public void testReachIterableOfUsage() {
+        List<Integer> expected = Arrays.asList(2, 2, 3, 3, 3);
+        List<Integer> actual =
+                ReachIterable.from(Arrays.asList("", "a", "bb", "ccc", "dddd", ""))
+                        .map(String::length)
+                        .flatMap(i -> Collections.nCopies(i, i))
+                        .filter(i -> i <= 3)
+                        .filter(i -> i > 1)
+                        .force();
+
+        assertEquals(expected, actual);
+    }
 }
