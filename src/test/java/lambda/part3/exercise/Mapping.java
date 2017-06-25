@@ -531,6 +531,15 @@ public class Mapping {
                         .force();
 
         assertEquals(expected, actual);
+
+        dataList = Arrays.asList("", "ab", "");
+        expected = Arrays.asList('a', 'b');
+        actual =
+                ReachIterable.from(dataList)
+                        .flatMap(this::getCharsList)
+                        .force();
+
+        assertEquals(expected, actual);
     }
 
     private List<Character> getCharsList(String s) {
