@@ -23,9 +23,20 @@ public class ReachIterableTest {
         boolean forNext(Consumer<T> consumer);
 
         default ReachIterable<T> filter(final Predicate<T> predicate) {
-            return consumer -> this.forNext(
-                    element -> { if (predicate.test(element)) consumer.accept(element); }
-            );
+            return consumer -> {
+                boolean hasNext = true;
+                final boolean[] matched = { false };
+                final Consumer<T> filteredConsumer = element -> {
+                    if (predicate.test(element)) {
+                        matched[0] = true;
+                        consumer.accept(element);
+                    }
+                };
+                while (!matched[0] && hasNext) {
+                    hasNext = this.forNext(filteredConsumer);
+                }
+                return hasNext;
+            };
         }
 
         default <R> ReachIterable<R> map(final Function<T, R> mapper) {
@@ -44,24 +55,21 @@ public class ReachIterableTest {
         }
 
         default boolean anyMatch(final Predicate<T> predicate) {
-            final boolean[] isAnyMatched = { false };
-            final Predicate<T> isMatched = element -> isAnyMatched[0] = predicate.test(element);
-            while (!isAnyMatched[0] && this.forNext(isMatched::test));
-            return isAnyMatched[0];
+            final boolean[] matched = { false };
+            final Consumer<T> testAndExtract = element -> matched[0] = predicate.test(element);
+            while (!matched[0] && this.forNext(testAndExtract));
+            return matched[0];
         }
 
         default boolean allMatch(final Predicate<T> predicate) {
-            final boolean[] isAllMatched = { true };
-            final Predicate<T> isMatched = element -> isAllMatched[0] = predicate.test(element);
-            while (isAllMatched[0] && this.forNext(isMatched::test));
-            return isAllMatched[0];
+            final boolean[] matched = { true };
+            final Consumer<T> testAndExtract = element -> matched[0] = predicate.test(element);
+            while (matched[0] && this.forNext(testAndExtract));
+            return matched[0];
         }
 
         default boolean noneMatch(final Predicate<T> predicate) {
-            final boolean[] isNoneMatched = { true };
-            final Predicate<T> isMatched = element -> isNoneMatched[0] = predicate.negate().test(element);
-            while (isNoneMatched[0] && this.forNext(isMatched::test));
-            return isNoneMatched[0];
+            return allMatch(predicate.negate());
         }
 
         @SuppressWarnings("unchecked")
@@ -86,8 +94,16 @@ public class ReachIterableTest {
     }
 
     private static Predicate<Employee> workedIn(final String company) {
-        return employee -> ReachIterable.from(employee.getJobHistory())
-                                        .anyMatch(job -> job.getEmployer().equalsIgnoreCase(company));
+        return employee -> employee.getJobHistory()
+                                   .stream()
+                                   .anyMatch(job -> job.getEmployer().equalsIgnoreCase(company));
+    }
+
+    private static Predicate<Employee> workedAs(final String position) {
+        return employee -> employee.getJobHistory()
+                                   .stream()
+                                   .map(JobHistoryEntry::getPosition)
+                                   .anyMatch(position::equalsIgnoreCase);
     }
 
     private List<Employee> employees;
@@ -139,9 +155,9 @@ public class ReachIterableTest {
                 )
         );
         final List<Employee> actual = new ArrayList<>();
-        final ReachIterable<Employee> personIterable = ReachIterable.from(employees)
-                                                                  .filter(workedIn("google"));
-        while(personIterable.forNext(actual::add));
+        final ReachIterable<Employee> employeeIterable = ReachIterable.from(employees)
+                                                                      .filter(workedIn("google"));
+        while(employeeIterable.forNext(actual::add));
         assertEquals(expected, actual);
     }
 
@@ -234,5 +250,14 @@ public class ReachIterableTest {
         final ReachIterable<Employee> personIterable = ReachIterable.from(employees);
         final Optional<Employee> employeeOptional = personIterable.firstMatch(workedIn("MacDonald's"));
         assertFalse(employeeOptional.isPresent());
+    }
+
+    @Test
+    public void filterIsWorkedPerOneTest() {
+        final ReachIterable<Employee> employeeIterable = ReachIterable.from(employees)
+                                                                      .filter(workedAs("qa"));
+        employeeIterable.forNext(employee -> assertEquals(employees.get(1), employee));
+        employeeIterable.forNext(employee -> assertEquals(employees.get(2), employee));
+        assertFalse(employeeIterable.forNext(System.out::println));
     }
 }
