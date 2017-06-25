@@ -7,6 +7,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -25,16 +28,14 @@ public class ReachIterableTest {
         default ReachIterable<T> filter(final Predicate<T> predicate) {
             return consumer -> {
                 boolean hasNext = true;
-                final boolean[] matched = { false };
+                final AtomicBoolean matched = new AtomicBoolean(false);
                 final Consumer<T> filteredConsumer = element -> {
                     if (predicate.test(element)) {
-                        matched[0] = true;
+                        matched.set(true);
                         consumer.accept(element);
                     }
                 };
-                while (!matched[0] && hasNext) {
-                    hasNext = this.forNext(filteredConsumer);
-                }
+                while (!matched.get() && hasNext) hasNext = this.forNext(filteredConsumer);
                 return hasNext;
             };
         }
@@ -46,26 +47,20 @@ public class ReachIterableTest {
         }
 
         default <R> ReachIterable<R> flatMap(final Function<T, List<R>> function) {
-            return consumer -> this.forNext(
-                    element -> {
-                        final ReachIterable<R> innerIterable = ReachIterable.from(function.apply(element));
-                        while (innerIterable.forNext(consumer));
-                    }
-            );
+            final List<R> results = new ArrayList<>();
+            while (this.forNext(element -> results.addAll(function.apply(element))));
+            return ReachIterable.from(results);
         }
 
         default boolean anyMatch(final Predicate<T> predicate) {
-            final boolean[] matched = { false };
-            final Consumer<T> testAndExtract = element -> matched[0] = predicate.test(element);
-            while (!matched[0] && this.forNext(testAndExtract));
-            return matched[0];
+            return firstMatch(predicate).isPresent();
         }
 
         default boolean allMatch(final Predicate<T> predicate) {
-            final boolean[] matched = { true };
-            final Consumer<T> testAndExtract = element -> matched[0] = predicate.test(element);
-            while (matched[0] && this.forNext(testAndExtract));
-            return matched[0];
+            final AtomicBoolean matched = new AtomicBoolean(true);
+            final Consumer<T> testAndExtract = element -> { if (predicate.negate().test(element)) matched.set(false); };
+            while (matched.get() && this.forNext(testAndExtract));
+            return matched.get();
         }
 
         default boolean noneMatch(final Predicate<T> predicate) {
@@ -74,10 +69,10 @@ public class ReachIterableTest {
 
         @SuppressWarnings("unchecked")
         default Optional<T> firstMatch(final Predicate<T> predicate) {
-            final Object[] objects = { null };
-            final Consumer<T> testAndExtract = element -> objects[0] =  predicate.test(element) ? element : null;
-            while (objects[0] == null && this.forNext(testAndExtract));
-            return Optional.ofNullable((T) objects[0]);
+            final AtomicReference<T> needle = new AtomicReference<>();
+            final Consumer<T> testAndExtract = element -> { if (predicate.test(element)) needle.set(element); };
+            while (Objects.isNull(needle.get()) && this.forNext(testAndExtract));
+            return Optional.ofNullable(needle.get());
         }
 
         static <T> ReachIterable<T> from(final List<T> list) {
@@ -162,6 +157,15 @@ public class ReachIterableTest {
     }
 
     @Test
+    public void filterIsWorkedPerOneTest() {
+        final ReachIterable<Employee> employeeIterable = ReachIterable.from(employees)
+                                                                      .filter(workedAs("qa"));
+        employeeIterable.forNext(employee -> assertEquals(employees.get(1), employee));
+        employeeIterable.forNext(employee -> assertEquals(employees.get(2), employee));
+        assertFalse(employeeIterable.forNext(System.out::println));
+    }
+
+    @Test
     public void mapTest() {
         final List<Person> expected = Arrays.asList(
                 new Person("a", "Galt", 30),
@@ -190,6 +194,28 @@ public class ReachIterableTest {
                                                                         .flatMap(Employee::getJobHistory);
         while(jobIterable.forNext(actual::add));
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void flatMapPerOnTestTest() {
+        final List<JobHistoryEntry> expected = Arrays.asList(
+                new JobHistoryEntry(2, "dev", "epam"),
+                new JobHistoryEntry(1, "dev", "google"),
+                new JobHistoryEntry(3, "qa", "yandex"),
+                new JobHistoryEntry(1, "qa", "epam"),
+                new JobHistoryEntry(1, "dev", "abc"),
+                new JobHistoryEntry(5, "qa", "epam")
+        );
+        final ReachIterable<JobHistoryEntry> jobIterable = ReachIterable.from(employees)
+                                                                        .flatMap(Employee::getJobHistory);
+
+        final AtomicInteger counter = new AtomicInteger();
+        boolean hasNext = true;
+        while (hasNext) {
+            counter.incrementAndGet();
+            hasNext = jobIterable.forNext(job -> assertTrue(expected.contains(job)));
+        }
+        assertEquals(expected.size(), counter.get());
     }
 
     @Test
@@ -250,14 +276,5 @@ public class ReachIterableTest {
         final ReachIterable<Employee> personIterable = ReachIterable.from(employees);
         final Optional<Employee> employeeOptional = personIterable.firstMatch(workedIn("MacDonald's"));
         assertFalse(employeeOptional.isPresent());
-    }
-
-    @Test
-    public void filterIsWorkedPerOneTest() {
-        final ReachIterable<Employee> employeeIterable = ReachIterable.from(employees)
-                                                                      .filter(workedAs("qa"));
-        employeeIterable.forNext(employee -> assertEquals(employees.get(1), employee));
-        employeeIterable.forNext(employee -> assertEquals(employees.get(2), employee));
-        assertFalse(employeeIterable.forNext(System.out::println));
     }
 }
