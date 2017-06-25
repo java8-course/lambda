@@ -5,10 +5,7 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -281,6 +278,29 @@ public class Mapping {
                     self.forEach(t -> c.accept(f.apply(t)));
                 }
             };
+        }
+
+        default Traversable<T> filter(Predicate<T> predicate) {
+            Traversable<T> self = this;
+
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    self.forEach(v -> {
+                        if (predicate.test(v))
+                            c.accept(v);
+                    });
+                }
+            };
+        }
+
+        default List<T> force() {
+            Traversable<T> self = this;
+            final List<T> result = new ArrayList<>();
+
+            self.forEach(result::add);
+
+            return result;
         }
 
         static <T> Traversable<T> from(List<T> l) {
