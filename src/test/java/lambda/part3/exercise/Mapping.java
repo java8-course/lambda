@@ -356,25 +356,27 @@ public class Mapping {
 
     interface ReachIterable<T> {
 
-        void resetIteration();
         boolean forNext(Consumer<T> c);
 
         default ReachIterable<T> filter(Predicate<T> p) {
             ReachIterable<T> self = this;
 
             return new ReachIterable<T>() {
-                @Override
-                public void resetIteration() {
-                    self.resetIteration();
-                }
 
                 @Override
                 public boolean forNext(Consumer<T> c) {
-                    return self.forNext(t -> {
-                        if (p.test(t)) {
-                            c.accept(t);
-                        }
-                    });
+                    boolean[] isTested = {false};
+                    boolean isNotEnd = true;
+                    while (!isTested[0] && isNotEnd) {
+                        isNotEnd = self.forNext(t -> {
+                            if (p.test(t)) {
+                                isTested[0] = true;
+                                c.accept(t);
+                            }
+                        });
+                    }
+
+                    return isTested[0];
                 }
             };
         }
@@ -383,10 +385,6 @@ public class Mapping {
             ReachIterable<T> self = this;
 
             return new ReachIterable<R>() {
-                @Override
-                public void resetIteration() {
-                    self.resetIteration();
-                }
 
                 @Override
                 public boolean forNext(Consumer<R> c) {
@@ -401,67 +399,54 @@ public class Mapping {
             ReachIterable<T> self = this;
 
             return new ReachIterable<R>() {
-                @Override
-                public void resetIteration() {
-                    self.resetIteration();
-                }
+
+                private ReachIterable<R> currentReachIterable = null;
+                private boolean hasNext = true;
+                private boolean result = false;
 
                 @Override
                 public boolean forNext(Consumer<R> c) {
-                    return self.forNext(t ->
-                            f.apply(t).forEach(c)
-                    );
+                    if (currentReachIterable == null && hasNext) {
+                        hasNext = self.forNext(t -> {
+                            currentReachIterable = ReachIterable.from(f.apply(t));
+                        });
+                    }
+
+                    result = currentReachIterable.forNext(c);
+
+                    if (result == false) {
+                        hasNext = self.forNext(t -> {
+                            currentReachIterable = ReachIterable.from(f.apply(t));
+                        });
+
+                        result = currentReachIterable.forNext(c);
+                    }
+
+                    return result;
                 }
             };
         }
 
         default boolean anyMatch(Predicate<T> p) {
             final boolean[] found = {false};
-            final boolean[] isNotEnd = {true};
-            while (!found[0] && isNotEnd[0]) {
-                isNotEnd[0] = forNext(t -> {
+            boolean isNotEnd = true;
+            while (!found[0] && isNotEnd) {
+                isNotEnd = forNext(t -> {
                     if (p.test(t)) {
                         found[0] = true;
                     }
                 });
             }
 
-            resetIteration();
             return found[0];
         }
 
         default boolean allMatch(Predicate<T> p) {
-            final boolean[] isAllMatch = {true};
-            final boolean[] isNotEnd = {true};
-            while (isAllMatch[0] && isNotEnd[0]) {
-                isNotEnd[0] = forNext(t -> {
-                    if (!p.test(t)) {
-                        isAllMatch[0] = false;
-                    }
-                });
-            }
-
-            resetIteration();
-            return isAllMatch[0];
+            return !anyMatch(p.negate());
         }
 
         default boolean nonMatch(Predicate<T> p) {
-            if (anyMatch(p)) {
-                return false;
-            }
-
-            final boolean[] isNonMatch = {true};
-            final boolean[] isNotEnd = {true};
-            while (isNonMatch[0] && isNotEnd[0]) {
-                isNotEnd[0] = forNext(t -> {
-                    if (p.test(t)) {
-                        isNonMatch[0] = false;
-                    }
-                });
-            }
-
-            resetIteration();
-            return isNonMatch[0];
+            return allMatch(p.negate());
         }
 
         default Optional<T> firstMatch(Predicate<T> p) {
@@ -477,7 +462,6 @@ public class Mapping {
                 });
             }
 
-            resetIteration();
             return Optional.ofNullable((T) object[0]);
         }
 
@@ -491,22 +475,16 @@ public class Mapping {
         static <T> ReachIterable<T> from(List<T> l) {
             return new ReachIterable<T>() {
 
-                ListIterator<T> listIterator = l.listIterator();
-
-                @Override
-                public void resetIteration() {
-                    while (listIterator.hasPrevious()) {
-                        listIterator.previous();
-                    }
-                }
+                private ListIterator<T> listIterator = l.listIterator();
 
                 @Override
                 public boolean forNext(Consumer<T> c) {
                     if (listIterator.hasNext()) {
                         c.accept(listIterator.next());
                         return true;
+                    } else {
+                        return false;
                     }
-                    return false;
                 }
             };
         }
