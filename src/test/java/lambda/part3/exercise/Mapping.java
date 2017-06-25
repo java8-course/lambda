@@ -6,7 +6,6 @@ import data.Person;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -400,26 +399,20 @@ public class Mapping {
 
             return new ReachIterable<R>() {
 
-                private ReachIterable<R> currentReachIterable = null;
-                private boolean hasNext = true;
-                private boolean result = false;
+                private ReachIterable<R> currentIterable =
+                        ReachIterable.from(Collections.emptyList());
+                private Consumer<T> getNewIterable =
+                        (T t) -> currentIterable = ReachIterable.from(f.apply(t));
 
                 @Override
                 public boolean forNext(Consumer<R> c) {
-                    if (currentReachIterable == null && hasNext) {
-                        hasNext = self.forNext(t -> {
-                            currentReachIterable = ReachIterable.from(f.apply(t));
-                        });
-                    }
+                    boolean result = currentIterable.forNext(c);
 
-                    result = currentReachIterable.forNext(c);
-
-                    if (result == false) {
-                        hasNext = self.forNext(t -> {
-                            currentReachIterable = ReachIterable.from(f.apply(t));
-                        });
-
-                        result = currentReachIterable.forNext(c);
+                    if (!result) {
+                        boolean isNotEnd = self.forNext(getNewIterable);
+                        if (isNotEnd) {
+                            result = currentIterable.forNext(c);
+                        }
                     }
 
                     return result;
@@ -452,9 +445,9 @@ public class Mapping {
         default Optional<T> firstMatch(Predicate<T> p) {
             final Object[] object = new Object[1];
             final boolean[] isMatch = {false};
-            final boolean[] isNotEnd = {true};
-            while (!isMatch[0] && isNotEnd[0]) {
-                isNotEnd[0] = forNext(t -> {
+            boolean isNotEnd = true;
+            while (!isMatch[0] && isNotEnd) {
+                isNotEnd = forNext(t -> {
                     if (p.test(t)) {
                         isMatch[0] = true;
                         object[0] = t;
