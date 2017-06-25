@@ -281,6 +281,17 @@ public class Mapping {
             };
         }
 
+        default <R> Traversable<R> flatMap(Function<T, List<R>> f) {
+            Traversable<T> self = this;
+
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t -> f.apply(t).forEach(c));
+                }
+            };
+        }
+
         default Traversable<T> filter(Predicate<T> predicate) {
             Traversable<T> self = this;
 
@@ -312,6 +323,52 @@ public class Mapping {
                 }
             };
         }
+
+        default List<T> toList() {
+            final List<T> result = new ArrayList<>();
+            this.forEach(result::add);
+            return result;
+        }
+    }
+
+    @Test
+    public void traversableFlatMapTest() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<JobHistoryEntry> expected = Arrays.asList(
+                new JobHistoryEntry(2, "dev", "epam"),
+                new JobHistoryEntry(1, "dev", "google"),
+                new JobHistoryEntry(3, "qa", "yandex"),
+                new JobHistoryEntry(1, "qa", "epam"),
+                new JobHistoryEntry(1, "dev", "abc"),
+                new JobHistoryEntry(5, "qa", "epam")
+        );
+
+        final List<JobHistoryEntry> actual =
+                Traversable.from(employees)
+                        .flatMap(Employee::getJobHistory)
+                        .toList();
+        assertEquals(expected, actual);
     }
 
     interface ReachIterable<T> {
