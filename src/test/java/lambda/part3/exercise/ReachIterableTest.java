@@ -46,10 +46,20 @@ public class ReachIterableTest {
             );
         }
 
-        default <R> ReachIterable<R> flatMap(final Function<T, List<R>> function) {
-            final List<R> results = new ArrayList<>();
-            while (this.forNext(element -> results.addAll(function.apply(element))));
-            return ReachIterable.from(results);
+        default <R> ReachIterable<R> flatMap(final Function<T, List<R>> mapper) {
+            final AtomicReference<ReachIterable<R>> inner = new AtomicReference<>(
+                    ReachIterable.from(Collections.emptyList())
+            );
+            final AtomicBoolean innerHasNext = new AtomicBoolean(false);
+            final Consumer<T> mapAndExtract = element -> inner.set(ReachIterable.from(mapper.apply(element)));
+            return consumer -> {
+                boolean outerHasNext = true;
+                if (!innerHasNext.get()) {
+                    outerHasNext = this.forNext(mapAndExtract);
+                }
+                innerHasNext.set(inner.get().forNext(consumer));
+                return  innerHasNext.get() || outerHasNext;
+            };
         }
 
         default boolean anyMatch(final Predicate<T> predicate) {
@@ -57,21 +67,20 @@ public class ReachIterableTest {
         }
 
         default boolean allMatch(final Predicate<T> predicate) {
-            final AtomicBoolean matched = new AtomicBoolean(true);
-            final Consumer<T> testAndExtract = element -> { if (predicate.negate().test(element)) matched.set(false); };
-            while (matched.get() && this.forNext(testAndExtract));
-            return matched.get();
+            return !anyMatch(predicate.negate());
         }
 
         default boolean noneMatch(final Predicate<T> predicate) {
-            return allMatch(predicate.negate());
+            return !anyMatch(predicate);
         }
 
-        @SuppressWarnings("unchecked")
         default Optional<T> firstMatch(final Predicate<T> predicate) {
             final AtomicReference<T> needle = new AtomicReference<>();
             final Consumer<T> testAndExtract = element -> { if (predicate.test(element)) needle.set(element); };
-            while (Objects.isNull(needle.get()) && this.forNext(testAndExtract));
+            boolean hasNext = true;
+            while (Objects.isNull(needle.get()) && hasNext) {
+                hasNext = this.forNext(testAndExtract);
+            }
             return Optional.ofNullable(needle.get());
         }
 
