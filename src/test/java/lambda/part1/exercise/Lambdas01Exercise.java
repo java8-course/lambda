@@ -27,7 +27,7 @@ public class Lambdas01Exercise {
         Arrays.sort(persons, new Comparator<Person>() {
             @Override
             public int compare(Person p1, Person p2) {
-                return -p1.getFirstName().compareTo(p2.getFirstName());
+                return p1.getAge() > p2.getAge() ? 1 : -1;
             }
         });
 
@@ -48,7 +48,7 @@ public class Lambdas01Exercise {
 
         Optional<Person> personOptional = FluentIterable.from(persons).firstMatch(new Predicate<Person>() {
             public boolean apply(Person p) {
-                return p.getFirstName().equals("name 1");
+                return p.getAge() == 30;
             }
         });
 

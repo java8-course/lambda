@@ -24,16 +24,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        Arrays.sort(persons, new Comparator<Person>() {
-            @Override
-            public int compare(Person p1, Person p2) {
-                if (p1.getAge() > p2.getAge()) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            }
-        });
+        Arrays.sort(persons, Comparator.comparingInt(p -> p.getAge()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
