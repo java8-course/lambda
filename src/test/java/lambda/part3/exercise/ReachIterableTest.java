@@ -7,9 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -26,17 +24,24 @@ public class ReachIterableTest {
         boolean forNext(Consumer<T> consumer);
 
         default ReachIterable<T> filter(final Predicate<T> predicate) {
-            return consumer -> {
+            final ReachIterable<T> self = this;
+            return new ReachIterable<T>() {
+                boolean matched = false;
                 boolean hasNext = true;
-                final AtomicBoolean matched = new AtomicBoolean(false);
-                final Consumer<T> filteredConsumer = element -> {
-                    if (predicate.test(element)) {
-                        matched.set(true);
-                        consumer.accept(element);
+
+                @Override
+                public boolean forNext(Consumer<T> consumer) {
+                    while (!matched && hasNext) {
+                        hasNext = self.forNext(
+                                element -> {
+                                    matched = predicate.test(element);
+                                    if (matched) consumer.accept(element);
+                                }
+                        );
                     }
-                };
-                while (!matched.get() && hasNext) hasNext = this.forNext(filteredConsumer);
-                return hasNext;
+                    matched = false;
+                    return hasNext;
+                }
             };
         }
 
@@ -47,18 +52,20 @@ public class ReachIterableTest {
         }
 
         default <R> ReachIterable<R> flatMap(final Function<T, List<R>> mapper) {
-            final AtomicReference<ReachIterable<R>> inner = new AtomicReference<>(
-                    ReachIterable.from(Collections.emptyList())
-            );
-            final AtomicBoolean innerHasNext = new AtomicBoolean(false);
-            final Consumer<T> mapAndExtract = element -> inner.set(ReachIterable.from(mapper.apply(element)));
-            return consumer -> {
-                boolean outerHasNext = true;
-                if (!innerHasNext.get()) {
-                    outerHasNext = this.forNext(mapAndExtract);
+            final ReachIterable<T> outer = this;
+            return new ReachIterable<R>() {
+                ReachIterable<R> inner = ReachIterable.from(Collections.emptyList());
+                boolean outerHasNext = false;
+                boolean innerHasNext = false;
+
+                @Override
+                public boolean forNext(Consumer<R> consumer) {
+                    if (!innerHasNext) {
+                        outerHasNext = outer.forNext(element -> inner = ReachIterable.from(mapper.apply(element)));
+                    }
+                    innerHasNext = inner.forNext(consumer);
+                    return  innerHasNext || outerHasNext;
                 }
-                innerHasNext.set(inner.get().forNext(consumer));
-                return  innerHasNext.get() || outerHasNext;
             };
         }
 
@@ -75,13 +82,13 @@ public class ReachIterableTest {
         }
 
         default Optional<T> firstMatch(final Predicate<T> predicate) {
-            final AtomicReference<T> needle = new AtomicReference<>();
-            final Consumer<T> testAndExtract = element -> { if (predicate.test(element)) needle.set(element); };
+            final Holder<T> needle = new Holder<>();
+            final Consumer<T> testAndExtract = element -> { if (predicate.test(element)) needle.value = element; };
             boolean hasNext = true;
-            while (Objects.isNull(needle.get()) && hasNext) {
+            while (Objects.isNull(needle.value) && hasNext) {
                 hasNext = this.forNext(testAndExtract);
             }
-            return Optional.ofNullable(needle.get());
+            return Optional.ofNullable(needle.value);
         }
 
         static <T> ReachIterable<T> from(final List<T> list) {
@@ -127,7 +134,8 @@ public class ReachIterableTest {
                 Arrays.asList(
                     new JobHistoryEntry(3, "qa", "yandex"),
                     new JobHistoryEntry(1, "qa", "epam"),
-                    new JobHistoryEntry(1, "dev", "abc")
+                    new JobHistoryEntry(1, "dev", "abc"),
+                    new JobHistoryEntry(1, "dev", "google")
             )
             ),
             new Employee(
@@ -149,15 +157,23 @@ public class ReachIterableTest {
 
     @Test
     public void filterTest() {
-        final List<Employee> expected = Collections.singletonList(
+        final List<Employee> expected = Arrays.asList(
                 new Employee(
                         new Person("a", "Galt", 30),
                         Arrays.asList(
                                 new JobHistoryEntry(2, "dev", "epam"),
                                 new JobHistoryEntry(1, "dev", "google")
                         )
-                )
-        );
+                ),
+                new Employee(
+                        new Person("b", "Doe", 40),
+                        Arrays.asList(
+                                new JobHistoryEntry(3, "qa", "yandex"),
+                                new JobHistoryEntry(1, "qa", "epam"),
+                                new JobHistoryEntry(1, "dev", "abc"),
+                                new JobHistoryEntry(1, "dev", "google")
+                        )
+                ));
         final List<Employee> actual = new ArrayList<>();
         final ReachIterable<Employee> employeeIterable = ReachIterable.from(employees)
                                                                       .filter(workedIn("google"));
@@ -196,6 +212,7 @@ public class ReachIterableTest {
                 new JobHistoryEntry(3, "qa", "yandex"),
                 new JobHistoryEntry(1, "qa", "epam"),
                 new JobHistoryEntry(1, "dev", "abc"),
+                new JobHistoryEntry(1, "dev", "google"),
                 new JobHistoryEntry(5, "qa", "epam")
         );
         final List<JobHistoryEntry> actual = new ArrayList<>();
@@ -206,13 +223,14 @@ public class ReachIterableTest {
     }
 
     @Test
-    public void flatMapPerOnTestTest() {
+    public void flatMapPerOnTest() {
         final List<JobHistoryEntry> expected = Arrays.asList(
                 new JobHistoryEntry(2, "dev", "epam"),
                 new JobHistoryEntry(1, "dev", "google"),
                 new JobHistoryEntry(3, "qa", "yandex"),
                 new JobHistoryEntry(1, "qa", "epam"),
                 new JobHistoryEntry(1, "dev", "abc"),
+                new JobHistoryEntry(1, "dev", "google"),
                 new JobHistoryEntry(5, "qa", "epam")
         );
         final ReachIterable<JobHistoryEntry> jobIterable = ReachIterable.from(employees)
@@ -225,6 +243,23 @@ public class ReachIterableTest {
             hasNext = jobIterable.forNext(job -> assertTrue(expected.contains(job)));
         }
         assertEquals(expected.size(), counter.get());
+    }
+
+    @Test
+    public void flatMapMappedHasFewerElementsTest() {
+        final List<Character> expected = Arrays.asList(
+                'a', 'b', 'c'
+        );
+        final List<Character> actual = new ArrayList<>();
+        final Function<String, List<Character>> stringToChars = string -> {
+            final List<Character> result = new ArrayList<>();
+            for (int i = 0; i < string.length(); i++) result.add(string.charAt(i));
+            return result;
+        };
+        final ReachIterable<Character> strings = ReachIterable.from(Arrays.asList("", "ab", "", "", "c", ""))
+                                                           .flatMap(stringToChars);
+        while(strings.forNext(actual::add));
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -286,4 +321,8 @@ public class ReachIterableTest {
         final Optional<Employee> employeeOptional = personIterable.firstMatch(workedIn("MacDonald's"));
         assertFalse(employeeOptional.isPresent());
     }
+}
+
+class Holder<T> {
+    T value;
 }
