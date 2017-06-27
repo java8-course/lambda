@@ -263,6 +263,50 @@ public class Mapping {
                                         new JobHistoryEntry(5, "qa", "epam")
                                 ))
                 );
+
+        final List<Employee> mappedEmployees =
+                Traversable.from(employees)
+                /*
+                .map(TODO) // change name to John
+                .map(TODO) // add 1 year to experience duration
+                .map(TODO) // replace qa with QA
+                * */
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("John"))).map(e -> e.withJobHistory(addOneYearTraversable(e.getJobHistory())))
+                        .map(e -> e.withJobHistory(toUpperCaseTraversable(e.getJobHistory())))
+                        .force();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("John", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "dev", "epam"),
+                                        new JobHistoryEntry(2, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("John", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(4, "QA", "yandex"),
+                                        new JobHistoryEntry(2, "QA", "epam"),
+                                        new JobHistoryEntry(2, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("John", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(6, "QA", "epam")
+                                ))
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+    }
+
+    private List<JobHistoryEntry> toUpperCaseTraversable(List<JobHistoryEntry> jobHistory) {
+        return Traversable.from(jobHistory).map(j ->
+                j.getPosition().equals("qa") ? j.withPosition("QA") : j).force();
+    }
+
+    private List<JobHistoryEntry> addOneYearTraversable(List<JobHistoryEntry> jobHistory) {
+        return Traversable.from(jobHistory).map(j -> j.withDuration(j.getDuration() + 1)).force();
     }
 
 
