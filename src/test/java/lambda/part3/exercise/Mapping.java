@@ -113,11 +113,7 @@ public class Mapping {
     }
 
     private List<JobHistoryEntry> toUpperCase(List<JobHistoryEntry> jobHistory) {
-        final List<JobHistoryEntry> tmp = new ArrayList<>();
-        jobHistory.forEach(j -> {
-            if (j.getPosition().equals("qa") ? tmp.add(j.withPosition("QA")) : tmp.add(j)) ;
-        });
-        return tmp;
+        return new MapHelper<JobHistoryEntry>(jobHistory).map(j -> j.getPosition().equals("qa")? j.withPosition("QA"): j).getList();
     }
 
     private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> jobHistory) {
@@ -141,7 +137,7 @@ public class Mapping {
 
         public List<R> force() {
             // TODO
-            return new MapHelper<>(list).map(t -> function.apply(t)).getList();
+            return new MapHelper<>(list).map(function).getList();
 
         }
 
