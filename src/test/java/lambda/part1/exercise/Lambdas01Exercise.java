@@ -24,7 +24,6 @@ public class Lambdas01Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
         Arrays.sort(persons, new Comparator<Person>() {
             @Override
             public int compare(Person o1, Person o2) {
