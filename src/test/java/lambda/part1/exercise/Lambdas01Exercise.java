@@ -1,5 +1,7 @@
 package lambda.part1.exercise;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import data.Person;
 import org.junit.Test;
@@ -21,7 +23,11 @@ public class Lambdas01Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
+        Arrays.sort(persons, new Comparator<Person>() {
+            public int compare(Person p1, Person p2) {
+                return Integer.compare(p1.getAge(), p2.getAge());
+            }
+        });
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
@@ -38,10 +44,19 @@ public class Lambdas01Exercise {
                 new Person("name 2", "lastName 1", 30)
         );
 
-        Person person = null;
+        final Person[] person = {null};
 
-        // TODO use FluentIterable
+        //noinspection Guava
+        FluentIterable.from(persons).anyMatch(new Predicate<Person>() {
+            public boolean apply(Person curPerson) {
+                if (curPerson.getAge() == 30) {
+                    person[0] = curPerson;
+                    return true;
+                }
+                return false;
+            }
+        });
 
-        assertEquals(person, new Person("name 1", "lastName 2", 30));
+        assertEquals(person[0], new Person("name 1", "lastName 2", 30));
     }
 }
