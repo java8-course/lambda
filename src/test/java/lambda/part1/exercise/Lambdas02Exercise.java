@@ -42,9 +42,7 @@ public class Lambdas02Exercise {
         Optional<Person> person = null;
 
         person = FluentIterable.from(persons)
-                .firstMatch(p -> (p.getFirstName().equals("name 1")
-                        && p.getLastName().equals("lastName 2")
-                        && p.getAge() == 30));
+                .firstMatch(p -> p.getAge() == 30);
 
         assertEquals(person.get(), new Person("name 1", "lastName 2", 30));
     }

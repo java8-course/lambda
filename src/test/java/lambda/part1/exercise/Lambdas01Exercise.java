@@ -51,9 +51,7 @@ public class Lambdas01Exercise {
         person = FluentIterable.from(persons)
                 .firstMatch(new Predicate<Person>() {
                     public boolean apply(Person p) {
-                        return (p.getFirstName().equals("name 1")
-                                && p.getLastName().equals("lastName 2")
-                                && p.getAge() == 30);
+                        return (p.getAge() == 30);
                     }
                 });
 
