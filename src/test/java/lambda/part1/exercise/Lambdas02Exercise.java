@@ -22,7 +22,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        Arrays.sort(persons, Comparator.comparing(p -> p.getAge()));
+        Arrays.sort(persons, Comparator.comparingInt(p -> p.getAge()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
