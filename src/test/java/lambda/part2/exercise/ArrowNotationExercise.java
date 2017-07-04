@@ -14,35 +14,38 @@ public class ArrowNotationExercise {
     @Test
     public void getAge() {
         // Person -> Integer
-        final Function<Person, Integer> getAge = null; // TODO
+        final Function<Person, Integer> getAge = Person::getAge;
 
         assertEquals(Integer.valueOf(33), getAge.apply(new Person("", "", 33)));
     }
 
     @Test
     public void compareAges() {
-        // TODO use BiPredicate
         // compareAges: (Person, Person) -> boolean
+        BiPredicate<Person, Person> compareAges = (p1, p2) -> p1.getAge() == p2.getAge();
 
-        throw new UnsupportedOperationException("Not implemented");
-        //assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
+        assertEquals(true, compareAges.test(new Person("a", "b", 22), new Person("c", "d", 22)));
     }
 
-    // TODO
-    // getFullName: Person -> String
+    // Person -> String
+    private String getFullName(Person p) {
+        return String.format("%s %s", p.getLastName(), p.getFirstName());
+    }
 
-    // TODO
-    // ageOfPersonWithTheLongestFullName: (Person -> String) -> (Person, Person) -> int
-    //
+
+    // (Person -> String) -> (Person, Person) -> int
+    private BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName(Function<Person, String> getFullName) {
+        return (p1, p2) -> getFullName(p1).length() > getFullName(p2).length() ? p1.getAge() : p2.getAge();
+    }
 
     @Test
     public void getAgeOfPersonWithTheLongestFullName() {
         // Person -> String
-        final Function<Person, String> getFullName = null; // TODO
+        final Function<Person, String> getFullName = this::getFullName;
 
         // (Person, Person) -> Integer
-        // TODO use ageOfPersonWithTheLongestFullName(getFullName)
-        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName = null;
+        final BiFunction<Person, Person, Integer> ageOfPersonWithTheLongestFullName =
+                ageOfPersonWithTheLongestFullName(getFullName);
 
         assertEquals(
                 Integer.valueOf(1),
