@@ -7,8 +7,10 @@ import data.Person;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -22,7 +24,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        Arrays.sort(persons, (o1, o2) -> Integer.valueOf(o1.getAge()).compareTo(o2.getAge()));
+        Arrays.sort(persons, (o1, o2) -> Comparator.comparingInt(Person::getAge).compare(o1, o2));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
