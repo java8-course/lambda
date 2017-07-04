@@ -23,12 +23,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        Arrays.sort(persons, new Comparator<Person>() {
-            @Override
-            public int compare(Person o1, Person o2) {
-                return o1.getAge()-o2.getAge();
-            }
-        });
+        Arrays.sort(persons, (o1, o2) -> o1.getAge()-o2.getAge());
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
@@ -47,12 +42,7 @@ public class Lambdas02Exercise {
 
         Person person = null;
 
-        com.google.common.base.Optional<Person> po = FluentIterable.from(persons).firstMatch(new Predicate<Person>() {
-            @Override
-            public boolean apply(Person p) {
-                return p.getAge()==30 ? true : false;
-            }
-        });
+        com.google.common.base.Optional<Person> po = FluentIterable.from(persons).firstMatch(p -> p.getAge()==30);
 
         if (po.isPresent()) person = po.get();
 
