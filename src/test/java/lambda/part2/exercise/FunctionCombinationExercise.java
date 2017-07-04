@@ -48,13 +48,13 @@ public class FunctionCombinationExercise {
 
     // TODO
     // negate: (T -> boolean) -> (T -> boolean)
-    private <T> Predicate<T> negate(Predicate<T> test) {
+    private <T> Predicate<T> negate(final Predicate<T> test) {
         return t -> !test.test(t);
     }
 
     // TODO
     // and: (T -> boolean, T -> boolean) -> (T -> boolean)
-    private <T> Predicate<T> and(Predicate<T> t1, Predicate<T> t2) {
+    private <T> Predicate<T> and(final Predicate<T> t1, final Predicate<T> t2) {
         return t -> t1.test(t) && t2.test(t);
     }
 
