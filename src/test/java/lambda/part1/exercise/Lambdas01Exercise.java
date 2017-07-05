@@ -27,7 +27,7 @@ public class Lambdas01Exercise {
         Arrays.sort(persons, new Comparator<Person>() {
                     @Override
                     public int compare(Person o1, Person o2) {
-                        return Comparator.<Person>comparingInt(Person::getAge).compare(o1, o2);
+                        return Integer.compare(o1.getAge(), o2.getAge());
                     }
                 }
         );
