@@ -21,12 +21,12 @@ public class FunctionCombinationExercise {
 
     // negate1: (Person -> boolean) -> (Person -> boolean)
     private Predicate<Person> negate1(Predicate<Person> predicate) {
-        return p -> predicate.negate().test(p);
+        return p -> !predicate.test(p);
     }
 
     // validateFirstNameAndLastName: (Person -> boolean, Person -> boolean) -> (Person -> boolean)
     private Predicate<Person> validateFirstNameAndLastName(Predicate<Person> t1, Predicate<Person> t2) {
-        return p ->  t1.test(p) & t2.test(p);
+        return p ->  t1.test(p) && t2.test(p);
     }
 
     @Test
@@ -46,12 +46,12 @@ public class FunctionCombinationExercise {
 
     // negate: (T -> boolean) -> (T -> boolean)
     private <T> Predicate<T> negate(Predicate<T> predicate) {
-        return t -> predicate.negate().test(t);
+        return t -> !predicate.test(t);
     }
 
     // and: (T -> boolean, T -> boolean) -> (T -> boolean)
     private <T> Predicate<T> and(Predicate<T> t1, Predicate<T> t2) {
-        return t -> t1.test(t) & t2.test(t);
+        return t -> t1.test(t) && t2.test(t);
     }
 
     @Test
