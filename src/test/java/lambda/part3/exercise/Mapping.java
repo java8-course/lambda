@@ -1,20 +1,17 @@
 package lambda.part3.exercise;
 
+import com.google.common.base.Optional;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class Mapping {
 
@@ -81,7 +78,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -131,23 +128,44 @@ public class Mapping {
     }
 
     private static class LazyFlatMapHelper<T, R> {
+        private final List<T> list;
+        private final Function<T, List<R>> function;
 
         public LazyFlatMapHelper(List<T> list, Function<T, List<R>> function) {
+            this.list = list;
+
+            this.function = function;
         }
 
         public static <T> LazyFlatMapHelper<T, T> from(List<T> list) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<>(list, Collections::singletonList);
         }
 
         public List<R> force() {
-            // TODO
-            throw new UnsupportedOperationException();
+            final List<R> result = new ArrayList<>();
+            list.forEach(t -> function.apply(t).forEach(result::add));
+
+            return result;
         }
 
-        // TODO filter
+        public List<T> toList() {
+            return list;
+        }
+
+
         // (T -> boolean) -> (T -> [T])
         // filter: [T1, T2] -> (T -> boolean) -> [T2]
         // flatMap": [T1, T2] -> (T -> [T]) -> [T2]
+        public LazyFlatMapHelper<T, T> filter(Predicate<T> p) {
+            return new LazyFlatMapHelper<T, T>(list, t -> {
+                final List<T> result = new ArrayList<>();
+                list.forEach(x -> {
+                    if (p.test(x))
+                        result.add(x);
+                });
+                return result;
+            });
+        }
 
         public <R2> LazyFlatMapHelper<T, R2> map(Function<R, R2> f) {
             final Function<R, List<R2>> listFunction = rR2TorListR2(f);
@@ -156,15 +174,20 @@ public class Mapping {
 
         // (R -> R2) -> (R -> [R2])
         private <R2> Function<R, List<R2>> rR2TorListR2(Function<R, R2> f) {
-            throw new UnsupportedOperationException();
+            return r -> Collections.singletonList(f.apply(r));
         }
 
         // TODO *
         public <R2> LazyFlatMapHelper<T, R2> flatMap(Function<R, List<R2>> f) {
-            throw new UnsupportedOperationException();
+            return new LazyFlatMapHelper<T, R2>(list, t -> {
+                final List<R2> result = new ArrayList<>();
+                final List<R> inter = function.apply(t);
+                inter.forEach(r -> f.apply(r).forEach(result::add));
+                return result;
+            });
         }
-    }
 
+    }
 
 
     @Test
@@ -198,7 +221,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -224,4 +247,342 @@ public class Mapping {
 
         assertEquals(mappedEmployees, expectedResult);
     }
+
+
+    interface ReachIterable<T> {
+        boolean tryGet(Consumer<T> c);
+
+        static <T> ReachIterable<T> from(List<T> list) {
+            final Iterator<T> it = list.iterator();
+            return new ReachIterable<T>() {
+                @Override
+                public boolean tryGet(Consumer<T> c) {
+                    if (it.hasNext()) {
+                        c.accept(it.next());
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            };
+        }
+
+
+        default List<T> toList() {
+            List<T> result = new ArrayList<>();
+            while (tryGet(result::add)) ;
+            return result;
+        }
+
+        default ReachIterable<T> filter(Predicate<T> p) {
+            return c -> tryGet(t -> {
+                if (p.test(t))
+                    c.accept(t);
+            });
+        }
+
+        default <R> ReachIterable<R> flatMap(Function<T, ReachIterable<R>> f) {
+            return c -> tryGet(t -> f.apply(t).toList().forEach(r -> c.accept(r)));
+        }
+
+        default <R> ReachIterable<R> map(Function<T, R> f) {
+            return c -> tryGet(t -> c.accept(f.apply(t)));
+        }
+
+
+        default boolean anyMatch(Predicate<T> p) {
+            return firstMatch(p).isPresent();
+        }
+
+        default boolean allMatch(Predicate<T> p) {
+            return !anyMatch(p.negate());
+        }
+
+        default boolean noneMatch(Predicate<T> p) {
+            return !firstMatch(p).isPresent();
+        }
+
+        default Optional<T> firstMatch(Predicate<T> p) {
+            final Object[] res = new Object[1];
+            final boolean[] b = {true};
+            while (b[0]) {
+                b[0] = tryGet(t -> {
+                    if (p.test(t)) {
+                        res[0] = t;
+                        b[0] = false;
+                    }
+                });
+            }
+
+            return Optional.fromNullable((T) res[0]);
+        }
+
+    }
+
+
+    @Test
+    public void reachIterableTest1() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> testList1 = Arrays.asList(
+                new Employee(
+                        new Person("c", "White", 50),
+                        Collections.singletonList(
+                                new JobHistoryEntry(5, "qa", "epam")
+                        )),
+                new Employee(
+                        new Person("c", "Black", 50),
+                        Collections.singletonList(
+                                new JobHistoryEntry(5, "qa", "epam")
+                        ))
+        );
+
+        final List<Employee> testList2 = Arrays.asList(
+                new Employee(
+                        new Person("a", "Galt", 30),
+                        Arrays.asList(
+                                new JobHistoryEntry(2, "dev", "epam"),
+                                new JobHistoryEntry(1, "dev", "google")
+                        )),
+                new Employee(
+                        new Person("b", "Doe", 40),
+                        Arrays.asList(
+                                new JobHistoryEntry(3, "qa", "yandex"),
+                                new JobHistoryEntry(1, "qa", "epam"),
+                                new JobHistoryEntry(1, "dev", "abc")
+                        )),
+                new Employee(
+                        new Person("c", "White", 50),
+                        Collections.singletonList(
+                                new JobHistoryEntry(5, "qa", "epam")
+                        )),
+                new Employee(
+                        new Person("d", "Some", 60),
+                        Collections.singletonList(
+                                new JobHistoryEntry(5, "qa", "epam")
+                        ))
+        );
+
+
+        final boolean anyMatch1 =
+                ReachIterable.from(employees)
+                        .anyMatch(e -> e.equals(testList1.get(0)));
+
+        final boolean anyMatch2 =
+                ReachIterable.from(employees)
+                        .anyMatch(e -> e.equals(testList1.get(1)));
+
+        final boolean allMatch1 =
+                ReachIterable.from(employees)
+                        .allMatch(e -> testList1.contains(e));
+
+        final boolean allMatch2 =
+                ReachIterable.from(employees)
+                        .allMatch(e -> testList2.contains(e));
+
+        final boolean noneMatch =
+                ReachIterable.from(employees)
+                        .noneMatch(e -> e.equals(testList1.get(1)));
+
+        final Optional<Employee> firstMatch = ReachIterable.from(employees)
+                .firstMatch(e -> e.equals(testList1.get(0)));
+
+        assertTrue(anyMatch1);
+        assertFalse(anyMatch2);
+        assertFalse(allMatch1);
+        assertTrue(allMatch2);
+        assertTrue(noneMatch);
+        assertTrue(firstMatch.isPresent());
+    }
+
+
+    @Test
+    public void reachIterableTest2() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+
+        final List<Employee> result = ReachIterable.from(employees)
+                .filter(e -> e.getPerson().getAge() >= 40)
+                .map(e -> e.withPerson(e.getPerson().withFirstName("Adam")))
+                .toList();
+
+        final List<Employee> expectedEmployees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("Adam", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("Adam", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<JobHistoryEntry> historyEntries =
+                ReachIterable.from(employees)
+                        .flatMap(e -> ReachIterable.from(e.getJobHistory()))
+                        .toList();
+
+        final List<JobHistoryEntry> expectedHistoryEntries =
+                Arrays.asList(
+                        new JobHistoryEntry(2, "dev", "epam"),
+                        new JobHistoryEntry(1, "dev", "google"),
+                        new JobHistoryEntry(3, "qa", "yandex"),
+                        new JobHistoryEntry(1, "qa", "epam"),
+                        new JobHistoryEntry(1, "dev", "abc"),
+                        new JobHistoryEntry(5, "qa", "epam")
+                );
+
+        assertEquals(expectedEmployees, result);
+        assertEquals(expectedHistoryEntries, historyEntries);
+    }
+
+
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default Traversable<T> filter(Predicate<T> p) {
+            return c -> forEach(t -> {
+                if (p.test(t))
+                    c.accept(t);
+            });
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, Traversable<R>> f) {
+            return c -> forEach(t -> f.apply(t).forEach(c::accept));
+        }
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            return c -> forEach(t -> c.accept(f.apply(t)));
+        }
+
+        default List<T> toList() {
+            List<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
+        }
+
+        static <T> Traversable<T> from(List<T> list) {
+            return list::forEach;
+        }
+
+    }
+
+
+    @Test
+    public void traversableTest() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                )),
+                        new Employee(
+                                new Person("d", "John", 60),
+                                Arrays.asList(
+                                        new JobHistoryEntry(5, "qa", "epam"),
+                                        new JobHistoryEntry(7, "dev", "apple")
+                                ))
+                );
+
+        final List<Employee> mappedEmployees =
+                Traversable.from(employees)
+                        .filter(employee -> employee.getPerson().getAge() > 40)
+                        .map(e -> e.withPerson(e.getPerson().withFirstName("Donald")))
+                        .toList();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("Donald", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                )),
+                        new Employee(
+                                new Person("Donald", "John", 60),
+                                Arrays.asList(
+                                        new JobHistoryEntry(5, "qa", "epam"),
+                                        new JobHistoryEntry(7, "dev", "apple")
+                                ))
+                );
+
+        final List<JobHistoryEntry> historyEntries =
+                Traversable.from(employees)
+                        .flatMap(e -> Traversable.from(e.getJobHistory()))
+                        .toList();
+
+        final List<JobHistoryEntry> expectedHistoryEntries =
+                Arrays.asList(
+                        new JobHistoryEntry(2, "dev", "epam"),
+                        new JobHistoryEntry(1, "dev", "google"),
+                        new JobHistoryEntry(3, "qa", "yandex"),
+                        new JobHistoryEntry(1, "qa", "epam"),
+                        new JobHistoryEntry(1, "dev", "abc"),
+                        new JobHistoryEntry(5, "qa", "epam"),
+                        new JobHistoryEntry(5, "qa", "epam"),
+                        new JobHistoryEntry(7, "dev", "apple")
+                );
+
+        assertEquals(mappedEmployees, expectedResult);
+        assertEquals(historyEntries, expectedHistoryEntries);
+    }
+
 }
