@@ -1,16 +1,12 @@
 package lambda.part3.exercise;
 
+import com.sun.org.apache.regexp.internal.RE;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
-import jdk.nashorn.internal.scripts.JO;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -189,6 +185,96 @@ public class Mapping {
         }
     }
 
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default List<T> toList() {
+            final List<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
+        }
+
+        static <T> Traversable<T> from(List<T> list) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> c) {
+                    list.forEach(c);
+                }
+            };
+        }
+
+        default Traversable<T> filter(Predicate<T> p) {
+            return c -> this.forEach(v -> {
+                if (p.test(v)) {
+                    c.accept(v);
+                }
+            });
+        }
+
+        default <R> Traversable<R> flatMap(Function<T, Traversable<R>> f) {
+            return c -> this.forEach(t -> f.apply(t).forEach(c));
+        }
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            return c -> this.forEach(t -> c.accept(f.apply(t)));
+        }
+    }
+
+    @Test
+    public void traversable() {
+        final List<Employee> employees =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                )),
+                        new Employee(
+                                new Person("b", "Doe", 40),
+                                Arrays.asList(
+                                        new JobHistoryEntry(3, "qa", "yandex"),
+                                        new JobHistoryEntry(1, "qa", "epam"),
+                                        new JobHistoryEntry(1, "dev", "abc")
+                                )),
+                        new Employee(
+                                new Person("c", "White", 50),
+                                Collections.singletonList(
+                                        new JobHistoryEntry(5, "qa", "epam")
+                                ))
+                );
+
+        final List<Employee> filteredEmployees =
+                Traversable.from(employees)
+                        .filter(e -> e.getPerson().getFirstName().equals("a")).toList();
+
+        final List<Employee> expectedResult =
+                Arrays.asList(
+                        new Employee(
+                                new Person("a", "Galt", 30),
+                                Arrays.asList(
+                                        new JobHistoryEntry(2, "dev", "epam"),
+                                        new JobHistoryEntry(1, "dev", "google")
+                                ))
+                );
+
+        assertEquals(filteredEmployees, expectedResult);
+
+        final List<JobHistoryEntry> flattedJobs =
+                Traversable.from(employees)
+                        .filter(e -> e.getPerson().getLastName().length() < 5)
+                        .flatMap(e -> Traversable.from(e.getJobHistory())).toList();
+
+        final List<JobHistoryEntry> jobs = Arrays.asList(
+                new JobHistoryEntry(2, "dev", "epam"),
+                new JobHistoryEntry(1, "dev", "google"),
+                new JobHistoryEntry(3, "qa", "yandex"),
+                new JobHistoryEntry(1, "qa", "epam"),
+                new JobHistoryEntry(1, "dev", "abc")
+        );
+
+        assertEquals(flattedJobs, jobs);
+    }
 
     @Test
     public void lazy_mapping() {
