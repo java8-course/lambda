@@ -21,8 +21,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         };
 
-        // TODO use Arrays.sort
-        Arrays.sort(persons, Comparator.comparing(p -> p.getAge()));
+        Arrays.sort(persons, Comparator.comparingInt(p -> p.getAge()));
 
         assertArrayEquals(persons, new Person[]{
                 new Person("name 3", "lastName 3", 20),
@@ -39,10 +38,7 @@ public class Lambdas02Exercise {
                 new Person("name 2", "lastName 1", 30)
         );
 
-        Person person = null;
-
-        // TODO use FluentIterable
-        person = FluentIterable.from(persons).firstMatch(p -> p.getAge() == 30).get();
+        Person person = FluentIterable.from(persons).firstMatch(p -> p.getAge() == 30).get();
 
         assertEquals(person, new Person("name 1", "lastName 2", 30));
     }
