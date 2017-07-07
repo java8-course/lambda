@@ -1,5 +1,6 @@
 package lambda.part3.exercise;
 
+import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader;
 import data.Employee;
 import data.JobHistoryEntry;
 import data.Person;
@@ -74,10 +75,12 @@ public class ReachIterableTest {
         }
 
         default Optional<T> firstMatch(Predicate<T> p) {
-            final ArrayList<T> curElem = new ArrayList<>();
-            while (tryGet(curElem::add)) {
-                if (p.test(curElem.get(curElem.size() - 1)))
-                    return Optional.of(curElem.get(curElem.size() - 1));
+            Map.Entry<Integer, Optional<T>> curElem =
+                    new AbstractMap.SimpleEntry<>(0, Optional.empty());
+            while (tryGet(c -> curElem.setValue(Optional.of(c)))) {
+                if (curElem.getValue().isPresent()
+                        && p.test(curElem.getValue().get()))
+                    return Optional.of(curElem.getValue().get());
             }
             return Optional.empty();
         }
