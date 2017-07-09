@@ -5,10 +5,7 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -153,15 +150,52 @@ public class Mapping {
 
 
         //TODO boolean anyMatch(Predicate<T> p)
+        default boolean anyMatch(Predicate<T> p) {
+            return firstMatch(p).isPresent();
+        }
+
         //TODO boolean allMatch(Predicate<T> p)
+        default boolean allMatch(Predicate<T> p) {
+            final List<Boolean> allMatch = Collections.singletonList(true);
+            final List<Boolean> keep = Collections.singletonList(true);
+            Consumer<T> consumer = t -> {
+                if (keep.get(0) && !p.test(t)) {
+                    allMatch.set(0, false);
+                    keep.set(0, false);
+                }
+            };
+            while (tryGet(consumer)) {}
+            return allMatch.get(0);
+        }
+
         //TODO boolean noneMatch(Predicate<T> p)
+        default boolean noneMatch(Predicate<T> p) {
+            return !allMatch(p);
+        }
 
         //TODO Optional<T> firstMatch(Predicate<T> p)
+        default Optional<T> firstMatch(Predicate<T> p) {
+            final List<Optional<T>> optionals = Collections.singletonList(Optional.empty());
+            final List<Boolean> keep = Collections.singletonList(true);
+            Consumer<T> consumer = t -> {
+                if (keep.get(0) && p.test(t)) {
+                    optionals.set(0, Optional.ofNullable(t));
+                    keep.set(0, false);
+                }
+            };
+            while (tryGet(consumer)) {}
+            return optionals.get(0);
+        }
 
         static <T> ReachIterable<T> from(List<T> list) {
             return new ReachIterable<T>() {
                 @Override
                 public boolean tryGet(Consumer<T> c) {
+                    Iterator<T> iterator = list.iterator();
+                    if (iterator.hasNext()) {
+                        c.accept(iterator.next());
+                        return true;
+                    }
                     return false;
                 }
             };
