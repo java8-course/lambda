@@ -9,10 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,8 +31,9 @@ public class Mapping {
         // [T] -> (T -> R) -> [R]
         // [T1, T2, T3] -> (T -> R) -> [R1, R2, R3]
         public <R> MapHelper<R> map(Function<T, R> f) {
-            // TODO
-            throw new UnsupportedOperationException();
+            List<R> rs = new ArrayList<>();
+            list.forEach(t -> rs.add(f.apply(t)));
+            return new MapHelper<>(rs);
         }
 
         // [T] -> (T -> [R]) -> [R]
@@ -43,11 +43,24 @@ public class Mapping {
         public <R> MapHelper<R> flatMap(Function<T, List<R>> f) {
             final List<R> result = new ArrayList<R>();
             list.forEach((T t) ->
-                    f.apply(t).forEach(result::add)
+                    result.addAll(f.apply(t))
             );
 
             return new MapHelper<R>(result);
         }
+    }
+
+    private List<JobHistoryEntry> addOneYear(List<JobHistoryEntry> entries){
+        return new MapHelper<>(entries)
+                .map(jobEntry -> jobEntry.getPosition().equals("qa") ? jobEntry.withPosition("QA") : jobEntry)
+                .getList();
+    }
+
+    private List<JobHistoryEntry> renamePosition(List<JobHistoryEntry> entries, String from, String to){
+        return new MapHelper<>(entries)
+                .map(jobHistoryEntry -> jobHistoryEntry.getPosition().equals(from) ?
+                        jobHistoryEntry.withPosition(to) :
+                        jobHistoryEntry).getList();
     }
 
     @Test
@@ -76,12 +89,15 @@ public class Mapping {
 
         final List<Employee> mappedEmployees =
                 new MapHelper<>(employees)
+                        .map(employee -> employee.withPerson(employee.getPerson().withFirstName("John")))
+                        .map(employee -> employee.withJobHistory(addOneYear(employee.getJobHistory())))
+                        .map(employee -> employee.withJobHistory(renamePosition(employee.getJobHistory(), "qa", "QA")))
+                        .getList();
                 /*
                 .map(TODO) // change name to John .map(e -> e.withPerson(e.getPerson().withFirstName("John")))
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
