@@ -168,6 +168,25 @@ public class Mapping {
         }
     }
 
+    interface ReachIterable<T>{
+        boolean hasNext();
+        T next();
+    }
+
+    interface Traversable<T> {
+        void forEach(Consumer<T> c);
+
+        default <R> Traversable<R> map(Function<T, R> f) {
+            Traversable<T> self = this;
+            return  new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> c) {
+                    self.forEach(t->c.accept(f.apply(t)));
+                }
+            };
+        }
+
+    }
 
     @Test
     public void lazy_mapping() {
