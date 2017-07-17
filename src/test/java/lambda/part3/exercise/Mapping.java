@@ -5,16 +5,14 @@ import data.JobHistoryEntry;
 import data.Person;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class Mapping {
 
@@ -81,7 +79,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration .map(e -> e.withJobHistory(addOneYear(e.getJobHistory())))
                 .map(TODO) // replace qa with QA
                 * */
-                .getList();
+                        .getList();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
@@ -165,7 +163,193 @@ public class Mapping {
         }
     }
 
+    interface ReachIterable<T> {
+        boolean tryGet(Consumer<T> consumer);
 
+        static<T> ReachIterable<T> from(List<T> list) {
+            final Iterator<T> iterator = list.iterator();
+            return new ReachIterable<T>() {
+                @Override
+                public boolean tryGet(Consumer<T> consumer) {
+                    if (iterator.hasNext()) {
+                        consumer.accept(iterator.next());
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            };
+        }
+
+        default List<T> force() {
+            final List<T> result = new ArrayList<>();
+            while (tryGet(result::add));
+            return result;
+        }
+
+        default ReachIterable<T> filter(Predicate<T> predicate) {
+            final ReachIterable<T> self = this;
+            return new ReachIterable<T>() {
+                @Override
+                public boolean tryGet(Consumer<T> consumer) {
+                    final Boolean[] booleans = {false};
+                    self.tryGet(t -> {
+                        if (predicate.test(t)) {
+                            booleans[0] = true;
+                            consumer.accept(t);
+                        }
+                    });
+
+                    return booleans[0];
+                }
+            };
+        }
+
+        default <R> ReachIterable<R> map(final Function<T, R> function) {
+            final ReachIterable<T> self = this;
+            return new ReachIterable<R>() {
+                @Override
+                public boolean tryGet(final Consumer<R> consumer) {
+                    return self.tryGet(t -> consumer.accept(function.apply(t)));
+                }
+            };
+        }
+
+        default <R> ReachIterable<R> flatMap(Function<T, ReachIterable<R>> function) {
+            final ReachIterable<T> self = this;
+            return new ReachIterable<R>() {
+                private ReachIterable<R> reachIterable;
+                @Override
+                public boolean tryGet(final Consumer<R> consumer) {
+                    boolean res = self.tryGet(t -> reachIterable = function.apply(t));
+                    while (reachIterable.tryGet(consumer));
+                    return res;
+                }
+            };
+        }
+
+        default boolean anyMatch(Predicate<T> p) {
+            return firstMatch(p).isPresent();
+        }
+
+        default boolean allMatch(Predicate<T> predicate) {
+            return !anyMatch(predicate.negate());
+        }
+
+        default boolean noneMatch(Predicate<T> predicate) {
+            return !anyMatch(predicate);
+        }
+
+        default Optional<T> firstMatch(Predicate<T> predicate) {
+            final Object[] objects = new Object[1];
+            while (tryGet(t -> {
+                if (predicate.test(t)) {
+                    objects[0] = t;
+                }
+            })) {
+                if (objects[0] != null) {
+                    return Optional.of((T)objects[0]);
+                }
+            }
+            return Optional.empty();
+        }
+    }
+
+    @Test
+    public void reachIterable() {
+        final List<Integer> integers = ReachIterable.from(Arrays.asList("1", "2", "3", "4", "5"))
+                .map(Integer::valueOf)
+                .filter(i -> i % 2 == 0)
+                .force();
+
+        assertEquals(integers, Arrays.asList(2,4));
+
+        final Optional<String> stringOptional = ReachIterable.from(Arrays.asList("1", "2", "3", "4", "5"))
+                .firstMatch(s -> s.equals("3"));
+
+        assertEquals(stringOptional, Optional.of("3"));
+
+        assertEquals(ReachIterable.from(Collections.singletonList("1")).firstMatch(s -> s.length() == 5), Optional.empty());
+
+        assertTrue(ReachIterable.from(Arrays.asList("1", "2", "3"))
+                .noneMatch(s -> s.length() == 3));
+
+        assertTrue(ReachIterable.from(Arrays.asList("1", "2", "3"))
+                .allMatch(s -> s.length() == 1));
+
+
+        final List<Integer> integers2 = ReachIterable.from(Arrays.asList(new String[][]{{"1", "2"}, {"3", "4"}, {"5", "6"}, {}}))
+                .flatMap(strings -> ReachIterable.from(Arrays.stream(strings).collect(Collectors.toList())))
+                .map(Integer::valueOf)
+                .filter(i -> i % 2 == 0)
+                .force();
+
+        assertEquals(integers2, Arrays.asList(2,4,6));
+    }
+
+    interface Traversable<T> {
+        void forEach(Consumer<T> consumer);
+
+        default <R> Traversable<R> flatMap(Function<T, Traversable<R>> function) {
+            final Traversable<T> self = this;
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> consumer) {
+                    self.forEach(t -> function.apply(t).forEach(consumer));
+                }
+            };
+        }
+
+        default Traversable<T> filter(Predicate<T> predicate) {
+            final Traversable<T> self = this;
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> consumer) {
+                    self.forEach(t -> {
+                        if (predicate.test(t)) {
+                            consumer.accept(t);
+                        }
+                    });
+                }
+            };
+        }
+
+        default <R> Traversable<R> map(Function<T,R> function) {
+            final Traversable<T> self = this;
+            return new Traversable<R>() {
+                @Override
+                public void forEach(Consumer<R> consumer) {
+                    self.forEach(t -> consumer.accept(function.apply(t)));
+                }
+            };
+        }
+
+        default List<T> toList() {
+            final List<T> result = new ArrayList<>();
+            forEach(result::add);
+            return result;
+        }
+
+        static <T> Traversable<T> from(List<T> list) {
+            return new Traversable<T>() {
+                @Override
+                public void forEach(Consumer<T> consumer) {
+                    list.forEach(consumer);
+                }
+            };
+        }
+    }
+
+    @Test
+    public void traversable() {
+        final List<Integer> integers = Traversable.from(Arrays.asList(new String[][]{{"1", "2"}, {"3", "4"}, {"5", "6"}}))
+                .flatMap(strings -> Traversable.from(Arrays.stream(strings).collect(Collectors.toList())))
+                .map(Integer::valueOf)
+                .filter(i -> i % 2 == 0)
+                .toList();
+
+        assertEquals(integers, Arrays.asList(2,4,6));
+    }
 
     @Test
     public void lazy_mapping() {
@@ -198,7 +382,7 @@ public class Mapping {
                 .map(TODO) // add 1 year to experience duration
                 .map(TODO) // replace qa with QA
                 * */
-                .force();
+                        .force();
 
         final List<Employee> expectedResult =
                 Arrays.asList(
