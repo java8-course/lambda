@@ -192,11 +192,15 @@ public class Mapping {
             return new ReachIterable<T>() {
                 @Override
                 public boolean tryGet(Consumer<T> consumer) {
-                    return self.tryGet(t -> {
+                    final Boolean[] booleans = {false};
+                    self.tryGet(t -> {
                         if (predicate.test(t)) {
+                            booleans[0] = true;
                             consumer.accept(t);
                         }
                     });
+
+                    return booleans[0];
                 }
             };
         }
