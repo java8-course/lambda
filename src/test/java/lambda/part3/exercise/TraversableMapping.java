@@ -22,7 +22,7 @@ public class TraversableMapping {
         default <R> Traversable<R> flatMap(Function<T, Traversable<R>> mapper){
 
             return consumer -> this.forEach(element -> mapper.apply(element).forEach(consumer));
-            return consumer -> this.forEach(consumer);
+            //return consumer -> this.forEach(consumer);
 
         }
 
