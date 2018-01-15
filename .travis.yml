@@ -9,5 +9,5 @@ script:
   - mvn clean verify
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
-  - export BRANCH_TARGET=sed s/[^0-9]//g
+  - export BRANCH_TARGET=${BRANCH//[^0-9]/}
   - mvn -Dtest=lambda.part$BRANCH_TARGET.exercise.* test
