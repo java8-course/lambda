@@ -8,10 +8,5 @@ jdk:
 script: mvn clean verify
   - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
   - echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
-
-if: type = pull_request AND $BRANCH =~ 1
-  - script: mvn -Dtest=lambda.part1.exercise.* test
-if: type = pull_request AND $BRANCH =~ 2
-  - script: mvn -Dtest=lambda.part2.exercise.* test
-if: type = pull_request AND $BRANCH =~ 3
-  - script: mvn -Dtest=lambda.part3.exercise.* test
+  - export BRANCH_TARGET=sed s/[^0-9]//g
+  - mvn -Dtest=lambda.part$BRANCH_TARGET.exercise.* test
