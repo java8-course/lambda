@@ -6,12 +6,9 @@ jdk:
   - oraclejdk8
 
 script: mvn clean verify
-
-script:
-  - mvn -Dtest=lambda.part1.exercise.* test
-
-script:
-  - mvn -Dtest=lambda.part2.exercise.* test
-
-script:
-  - mvn -Dtest=lambda.part3.exercise.* test
+if: type = pull_request AND tag =~ ^.art1
+  - script: mvn -Dtest=lambda.part1.exercise.* test
+if: type = pull_request AND tag =~ ^.art2
+  - script: mvn -Dtest=lambda.part2.exercise.* test
+if: type = pull_request AND tag =~ ^.art3
+  - script: mvn -Dtest=lambda.part3.exercise.* test
