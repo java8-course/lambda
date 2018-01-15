@@ -9,5 +9,9 @@ script: mvn clean verify
 
 script:
   - mvn -Dtest=lambda.part1.exercise.* test
+
+script:
   - mvn -Dtest=lambda.part2.exercise.* test
+
+script:
   - mvn -Dtest=lambda.part3.exercise.* test
